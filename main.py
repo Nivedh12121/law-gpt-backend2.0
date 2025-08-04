@@ -9,6 +9,7 @@ import logging
 from typing import Dict, Any
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 import uvicorn
 
@@ -337,7 +338,7 @@ async def health_check():
         "version": "1.0.0"
     }
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat", response_class=PlainTextResponse)
 async def chat_endpoint(request: ChatRequest):
     """Main chat endpoint for legal queries"""
     try:
@@ -347,9 +348,10 @@ async def chat_endpoint(request: ChatRequest):
         # Get legal response
         response_data = get_legal_response(request.query)
         
-        return ChatResponse(
-            response=response_data["response"],
-            sources=response_data.get("sources", [])
+        # Return just the response text for frontend compatibility
+        return PlainTextResponse(
+            content=response_data["response"],
+            media_type="text/plain"
         )
         
     except Exception as e:
