@@ -7,6 +7,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
+import google.generativeai as genai
+import asyncio
 
 # --- Configuration ---
 DATA_DIRECTORY = "Kanoon data cleande" 
@@ -16,6 +18,11 @@ CORS_ORIGINS = [
     "https://law-gpt-frontend-2-0-y3zc-fcol8q14r-nivedhs-projects-ce31ae36.vercel.app",
     "http://localhost:3000",
 ]
+
+# Gemini AI Configuration
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -80,6 +87,33 @@ def tokenize(text: str) -> set:
     words = text.lower().split()
     return set(words) - STOP_WORDS
 
+async def get_ai_response(query: str, context: str = "") -> str:
+    """Get AI-powered response using Gemini"""
+    if not GEMINI_API_KEY:
+        return "AI service not available. Please configure GEMINI_API_KEY."
+    
+    try:
+        model = genai.GenerativeModel('gemini-pro')
+        
+        prompt = f"""You are an expert Indian legal assistant. Answer the following legal question with accurate information about Indian law.
+
+Question: {query}
+
+{f"Relevant context from legal database: {context}" if context else ""}
+
+Please provide:
+1. A clear, accurate answer based on Indian law
+2. Relevant legal sections/acts if applicable
+3. Important disclaimers about consulting qualified legal professionals
+
+Format your response in a professional, helpful manner."""
+
+        response = await asyncio.to_thread(model.generate_content, prompt)
+        return response.text
+    except Exception as e:
+        logger.error(f"Gemini API error: {e}")
+        return f"I apologize, but I'm experiencing technical difficulties. Please try again later or consult with a qualified legal professional for your query: '{query[:50]}...'"
+
 def find_best_answer(query: str) -> Dict[str, Any]:
     query_tokens = tokenize(query)
     best_match = None
@@ -103,12 +137,21 @@ def find_best_answer(query: str) -> Dict[str, Any]:
     if best_match and highest_score > 1:
         return {
             "response": best_match.get("answer", "Answer not found."),
-            "sources": [best_match.get("context", "Kanoon Database")]
+            "sources": [best_match.get("context", "Kanoon Database")],
+            "match_type": "database"
         }
             
+    # If no good match found, prepare for AI response
+    context = ""
+    if best_match:
+        context = f"Related info: {best_match.get('answer', '')[:200]}..."
+    
     return {
-        "response": "I could not find a specific answer in my database. Please try rephrasing your question.",
-        "sources": ["Default Response"]
+        "response": "",  # Will be filled by AI
+        "sources": ["AI Legal Assistant", "Indian Law Knowledge"],
+        "match_type": "ai",
+        "context": context,
+        "query": query
     }
 
 # --- API Endpoints ---
@@ -122,7 +165,22 @@ async def chat_endpoint(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Query cannot be empty")
     if not KNOWLEDGE_BASE:
         raise HTTPException(status_code=503, detail="Knowledge base is not loaded.")
+    
     response_data = find_best_answer(request.query)
+    
+    # If no database match, use AI
+    if response_data.get("match_type") == "ai":
+        ai_response = await get_ai_response(
+            response_data["query"], 
+            response_data.get("context", "")
+        )
+        response_data["response"] = ai_response
+    
+    # Clean up internal fields
+    response_data.pop("match_type", None)
+    response_data.pop("context", None)
+    response_data.pop("query", None)
+    
     return ChatResponse(**response_data)
 
 if __name__ == "__main__":
