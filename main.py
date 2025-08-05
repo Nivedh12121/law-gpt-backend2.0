@@ -383,10 +383,17 @@ class ChatResponse(BaseModel):
 async def get_ai_response(query: str, context: str = "", relevant_matches: List[Dict] = None) -> str:
     """Enhanced AI response with better context utilization"""
     if not GEMINI_API_KEY:
-        return "AI service not available. Please configure GEMINI_API_KEY."
+        return format_database_response(query, relevant_matches)
     
     try:
-        model = genai.GenerativeModel('gemini-pro')
+        # Configure Gemini with safety settings
+        model = genai.GenerativeModel(
+            'gemini-pro',
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.3,
+                max_output_tokens=2048,
+            )
+        )
         
         system_prompt = """
 You are Law GPT – a specialized AI-powered Indian legal assistant with expertise in Indian jurisprudence.
@@ -454,10 +461,60 @@ LEGAL QUERY: {query}
 Provide a comprehensive, accurate response following the exact format above. Focus on Indian law and ensure all information is current and precise."""
 
         response = await asyncio.to_thread(model.generate_content, prompt)
-        return response.text
+        
+        # Check if response is valid
+        if response and hasattr(response, 'text') and response.text:
+            return response.text
+        else:
+            # Fallback to structured database response
+            return format_database_response(query, relevant_matches)
+            
     except Exception as e:
         logger.error(f"Gemini API error: {e}")
-        return f"⚖️ **Technical Issue**\n\nI apologize, but I'm experiencing technical difficulties processing your query about: '{query[:50]}...'\n\n🛑 **Recommendation**: Please try again in a moment or consult with a qualified legal professional for immediate assistance."
+        # Fallback to structured database response instead of error
+        return format_database_response(query, relevant_matches)
+
+def format_database_response(query: str, relevant_matches: List[Dict] = None) -> str:
+    """Format database response in professional legal structure when AI fails"""
+    if not relevant_matches:
+        return """⚖️ **Legal Query Response**
+
+📘 **Overview**: 
+I apologize, but I couldn't find specific information for your query in our legal database.
+
+🛑 **Legal Disclaimer**: 
+This information is for educational purposes only and does not constitute legal advice. Consult a qualified advocate for specific legal matters.
+
+📌 **Recommendation**: 
+Please rephrase your query or consult with a legal professional for detailed guidance."""
+
+    primary_match = relevant_matches[0]
+    answer = primary_match.get("answer", "")
+    question = primary_match.get("question", "")
+    context = primary_match.get("context", "Legal Database")
+    
+    # Extract key information
+    title = question[:50] + "..." if len(question) > 50 else question
+    
+    return f"""⚖️ **{title}**
+
+📘 **Overview**: 
+{answer[:300]}{'...' if len(answer) > 300 else ''}
+
+📜 **Relevant Legal Provisions**:
+• Source: {context}
+• Reference: Indian Legal Database
+
+📚 **Additional Context**:
+{answer[300:600] if len(answer) > 300 else 'Please refer to the complete legal text for detailed provisions.'}
+
+🛑 **Legal Disclaimer**: 
+This information is for educational purposes only and does not constitute legal advice. Consult a qualified advocate for specific legal matters.
+
+📌 **Action Steps**:
+1. Review the complete legal provisions
+2. Consult with a qualified legal professional
+3. Verify current legal status and amendments"""
 
 def calculate_enhanced_confidence(query: str, matches: List[Dict[str, Any]]) -> float:
     """Calculate confidence score with multiple factors"""
