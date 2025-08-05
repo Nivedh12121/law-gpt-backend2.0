@@ -520,25 +520,15 @@ def get_enhanced_response(query: str) -> Dict[str, Any]:
     # Calculate enhanced confidence
     confidence = calculate_enhanced_confidence(query, best_matches)
     
-    # Use database answer if confidence is high enough (lowered threshold for better coverage)
-    if confidence > 0.4:  # Higher threshold for database answers
-        primary_match = best_matches[0]
-        return {
-            "response": primary_match.get("answer", "Answer not available."),
-            "sources": [primary_match.get("context", "Legal Database")],
-            "match_type": "database",
-            "confidence": confidence
-        }
-    else:
-        # Use AI with context from matches
-        return {
-            "response": "",
-            "sources": ["AI Legal Assistant", "Indian Law Database"],
-            "match_type": "ai",
-            "context": best_matches[:3],  # Pass top 3 matches as context
-            "query": query,
-            "confidence": confidence
-        }
+    # Always use AI formatting with database context for professional responses
+    return {
+        "response": "",
+        "sources": ["AI Legal Assistant", "Indian Law Database"],
+        "match_type": "ai_enhanced",
+        "context": best_matches[:3],  # Pass top 3 matches as context
+        "query": query,
+        "confidence": confidence
+    }
 
 # --- API Endpoints ---
 @app.get("/")
@@ -577,8 +567,8 @@ async def chat_endpoint(request: ChatRequest):
     # Get enhanced response
     response_data = get_enhanced_response(request.query)
     
-    # If using AI, generate response
-    if response_data.get("match_type") == "ai":
+    # If using AI (including ai_enhanced), generate response
+    if response_data.get("match_type") in ["ai", "ai_enhanced"]:
         ai_response = await get_ai_response(
             response_data["query"], 
             response_data.get("context", ""),
