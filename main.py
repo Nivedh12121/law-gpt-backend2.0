@@ -475,7 +475,7 @@ Provide a comprehensive, accurate response following the exact format above. Foc
         return format_database_response(query, relevant_matches)
 
 def format_database_response(query: str, relevant_matches: List[Dict] = None) -> str:
-    """Format database response in professional legal structure when AI fails"""
+    """Format database response in professional legal structure"""
     if not relevant_matches:
         return """⚖️ **Legal Query Response**
 
@@ -493,28 +493,55 @@ Please rephrase your query or consult with a legal professional for detailed gui
     question = primary_match.get("question", "")
     context = primary_match.get("context", "Legal Database")
     
-    # Extract key information
-    title = question[:50] + "..." if len(question) > 50 else question
+    # Smart title extraction based on query
+    if "void" in query.lower() and "voidable" in query.lower():
+        title = "Void Agreement vs Voidable Contract - Indian Contract Act"
+    elif "section" in query.lower() and any(num in query for num in ["302", "420", "498"]):
+        title = f"Indian Penal Code - {query}"
+    elif "article" in query.lower():
+        title = f"Indian Constitution - {query}"
+    else:
+        title = question[:60] + "..." if len(question) > 60 else question
+    
+    # Extract sections and acts mentioned
+    sections = []
+    if "section" in answer.lower():
+        import re
+        section_matches = re.findall(r'[Ss]ection\s+(\d+[A-Za-z]*)', answer)
+        sections = list(set(section_matches))[:3]  # Top 3 unique sections
+    
+    sections_text = f"• Sections: {', '.join(sections)}" if sections else "• Refer to relevant sections in the Act"
     
     return f"""⚖️ **{title}**
 
 📘 **Overview**: 
-{answer[:300]}{'...' if len(answer) > 300 else ''}
+{answer[:400]}{'...' if len(answer) > 400 else ''}
 
 📜 **Relevant Legal Provisions**:
+• Act/Law: Indian Contract Act, 1872 / Indian Penal Code / Constitution of India
+{sections_text}
 • Source: {context}
-• Reference: Indian Legal Database
 
-📚 **Additional Context**:
-{answer[300:600] if len(answer) > 300 else 'Please refer to the complete legal text for detailed provisions.'}
+� **Legal Implications**:
+{answer[400:700] if len(answer) > 400 else 'Refer to complete legal text for detailed consequences and penalties.'}
 
-🛑 **Legal Disclaimer**: 
-This information is for educational purposes only and does not constitute legal advice. Consult a qualified advocate for specific legal matters.
+� **Key Points**:
+• This information is based on Indian legal database
+• Multiple legal precedents may apply
+• Specific circumstances affect legal interpretation
+
+🛠️ **Available Remedies**:
+• Consult with qualified legal counsel
+• Review complete statutory provisions
+• Consider jurisdiction-specific variations
 
 📌 **Action Steps**:
-1. Review the complete legal provisions
-2. Consult with a qualified legal professional
-3. Verify current legal status and amendments"""
+1. Review the complete legal provisions and amendments
+2. Consult with a qualified advocate for case-specific advice
+3. Verify current legal status and recent judgments
+
+🛑 **Legal Disclaimer**: 
+This information is for educational purposes only and does not constitute legal advice. Consult a qualified advocate for specific legal matters."""
 
 def calculate_enhanced_confidence(query: str, matches: List[Dict[str, Any]]) -> float:
     """Calculate confidence score with multiple factors"""
@@ -577,15 +604,24 @@ def get_enhanced_response(query: str) -> Dict[str, Any]:
     # Calculate enhanced confidence
     confidence = calculate_enhanced_confidence(query, best_matches)
     
-    # Always use AI formatting with database context for professional responses
-    return {
-        "response": "",
-        "sources": ["AI Legal Assistant", "Indian Law Database"],
-        "match_type": "ai_enhanced",
-        "context": best_matches[:3],  # Pass top 3 matches as context
-        "query": query,
-        "confidence": confidence
-    }
+    # Use structured database response for immediate professional formatting
+    if confidence > 0.3:  # Good database match
+        return {
+            "response": format_database_response(query, best_matches[:3]),
+            "sources": ["Indian Law Database", "Legal Assistant"],
+            "match_type": "structured_database",
+            "confidence": confidence
+        }
+    else:
+        # Use AI formatting with database context for professional responses
+        return {
+            "response": "",
+            "sources": ["AI Legal Assistant", "Indian Law Database"],
+            "match_type": "ai_enhanced",
+            "context": best_matches[:3],  # Pass top 3 matches as context
+            "query": query,
+            "confidence": confidence
+        }
 
 # --- API Endpoints ---
 @app.get("/")
@@ -632,6 +668,7 @@ async def chat_endpoint(request: ChatRequest):
             response_data.get("context") if isinstance(response_data.get("context"), list) else None
         )
         response_data["response"] = ai_response
+    # structured_database responses already have formatted response
     
     # Clean up internal fields
     response_data.pop("match_type", None)
