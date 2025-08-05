@@ -338,7 +338,7 @@ async def health_check():
         "version": "1.0.0"
     }
 
-@app.post("/chat", response_class=PlainTextResponse)
+@app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     """Main chat endpoint for legal queries"""
     try:
@@ -348,10 +348,9 @@ async def chat_endpoint(request: ChatRequest):
         # Get legal response
         response_data = get_legal_response(request.query)
         
-        # Return just the response text for frontend compatibility
-        return PlainTextResponse(
-            content=response_data["response"],
-            media_type="text/plain"
+        return ChatResponse(
+            response=response_data["response"],
+            sources=response_data.get("sources", [])
         )
         
     except Exception as e:
