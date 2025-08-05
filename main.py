@@ -79,34 +79,78 @@ class ChatResponse(BaseModel):
     sources: list = []
 
 # --- Search Logic ---
+import re
+
+# A simple list of common English stop words to improve search quality
+STOP_WORDS = set([
+    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and",
+    "any", "are", "as", "at", "be", "because", "been", "before", "being", "below",
+    "between", "both", "but", "by", "can", "did", "do", "does", "doing", "down",
+    "during", "each", "few", "for", "from", "further", "had", "has", "have",
+    "having", "he", "her", "here", "hers", "herself", "him", "himself", "his",
+    "how", "i", "if", "in", "into", "is", "it", "its", "itself", "just", "me",
+    "more", "most", "my", "myself", "no", "nor", "not", "now", "of", "off", "on",
+    "once", "only", "or", "other", "our", "ours", "ourselves", "out", "over",
+    "own", "s", "same", "she", "should", "so", "some", "such", "t", "than",
+    "that", "the", "their", "theirs", "them", "themselves", "then", "there",
+    "these", "they", "this", "those", "through", "to", "too", "under", "until",
+    "up", "very", "was", "we", "were", "what", "when", "where", "which", "while",
+    "who", "whom", "why", "will", "with", "you", "your", "yours", "yourself",
+    "yourselves", "indian", "law", "act", "what", "is", "the", "of"
+])
+
+def tokenize(text: str) -> set:
+    """Simple tokenizer that splits text, lowercases, and removes stop words."""
+    text = re.sub(r'[^\w\s]', '', text) # remove punctuation
+    words = text.lower().split()
+    return set(words) - STOP_WORDS
+
 def find_best_answer(query: str) -> Dict[str, Any]:
     """
-    Finds the best answer from the knowledge base using simple keyword matching.
-    This is the function to be enhanced with a call to a generative model like Gemini.
+    Finds the best answer from the knowledge base using a keyword matching score.
     """
-    query_lower = query.lower().strip()
+    query_tokens = tokenize(query)
     
-    # Priority 1: Search the structured knowledge base first
+    best_match = None
+    highest_score = 0
+
+    if not query_tokens:
+        return {
+            "response": "Your query was too generic. Please provide more specific details.",
+            "sources": ["Query Processor"]
+        }
+
     for item in KNOWLEDGE_BASE:
-        question = item.get("question", "").lower()
-        if query_lower in question:
-            logger.info(f"Found a direct match for '{query}' in the knowledge base.")
-            return {
-                "response": item.get("answer", "An answer was found but could not be formatted."),
-                "sources": [item.get("context", "Kanoon Database")]
-            }
+        question = item.get("question", "")
+        if not question:
+            continue
             
-    # Priority 2: If no direct match, this is where you would call a generative model
-    # For now, we will return a helpful default message.
-    # Example placeholder for a future Gemini call:
-    # if USE_GEMINI_API:
-    #     return call_gemini_api(query, context=KNOWLEDGE_BASE)
-    
-    logger.info(f"No direct match found for '{query}'. Returning default response.")
-    return {
-        "response": f"""I could not find a specific answer for "{query}" in my structured database. 
+        question_tokens = tokenize(question)
         
-This is an opportunity to use a generative AI model like Google's Gemini to provide a more detailed, conversational answer. 
+        # Calculate score based on the number of common keywords
+        common_tokens = query_tokens.intersection(question_tokens)
+        score = len(common_tokens)
+        
+        if score > highest_score:
+            highest_score = score
+            best_match = item
+
+    # Set a threshold to ensure the match is relevant
+    # Requires at least 2 words to match and 30% of query words to be present
+    match_threshold = len(query_tokens) * 0.3
+
+    if best_match and highest_score > 1 and highest_score >= match_threshold:
+        logger.info(f"Found a best match for '{query}' with score {highest_score} in question: '{best_match.get('question')}'")
+        return {
+            "response": best_match.get("answer", "An answer was found but could not be formatted."),
+            "sources": [best_match.get("context", "Kanoon Database")]
+        }
+            
+    logger.info(f"No suitable match found for '{query}'. Highest score was {highest_score}.")
+    return {
+        "response": f"""I could not find a specific answer for "{query}" in my structured database.
+        
+This is an opportunity to use a generative AI model like Google's Gemini to provide a more detailed, conversational answer.
 
 For now, please try rephrasing your question or asking about a different legal topic.""",
         "sources": ["Default Response"]
