@@ -15,10 +15,13 @@ import math
 # --- Configuration ---
 DATA_DIRECTORY = "Kanoon data cleande" 
 CORS_ORIGINS = [
+    "https://law-gpt-professional.web.app",
+    "https://law-gpt-professional.firebaseapp.com",
     "https://law-gpt-frontend-2-0.vercel.app",
     "https://law-gpt-frontend-2-0-y3zc-1sfz8xujo-nivedhs-projects-ce31ae36.vercel.app",
     "https://law-gpt-frontend-2-0-y3zc-fcol8q14r-nivedhs-projects-ce31ae36.vercel.app",
     "http://localhost:3000",
+    "*"  # Allow all origins for global access
 ]
 
 # Gemini AI Configuration
