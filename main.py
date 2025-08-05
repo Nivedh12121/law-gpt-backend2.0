@@ -56,9 +56,9 @@ def load_all_json_data(directory: str) -> List[Dict[str, Any]]:
 
 # --- FastAPI App Initialization ---
 app = FastAPI(
-    title="Law GPT API - Final Version",
-    description="AI Legal Assistant powered by a large knowledge base.",
-    version="4.0.0"
+    title="Law GPT API - Professional Legal Assistant",
+    description="AI-powered Indian legal assistant with structured responses and comprehensive legal analysis.",
+    version="5.0.0"
 )
 
 app.add_middleware(
@@ -88,25 +88,50 @@ def tokenize(text: str) -> set:
     return set(words) - STOP_WORDS
 
 async def get_ai_response(query: str, context: str = "") -> str:
-    """Get AI-powered response using Gemini"""
+    """Get AI-powered response using Gemini with professional legal format"""
     if not GEMINI_API_KEY:
         return "AI service not available. Please configure GEMINI_API_KEY."
     
     try:
         model = genai.GenerativeModel('gemini-pro')
         
-        prompt = f"""You are an expert Indian legal assistant. Answer the following legal question with accurate information about Indian law.
+        system_prompt = """
+You are Law GPT – an AI-powered Indian legal assistant.
+Your task is to answer legal questions clearly, concisely, and with reference to Indian laws.
+Always follow this format:
+⚖️ Title: Provide a short legal title for the response.
+📘 Introduction: Brief explanation of what the question is about.
+📜 Legal Provisions:
+- Mention relevant sections from Indian Acts (e.g., Companies Act, IPC, CrPC).
+- Quote section numbers and their implications (e.g., Section 92, 164(2) of Companies Act, 2013).
+💼 Penalties & Consequences:
+- Clearly list monetary fines, disqualification, imprisonment, or other penalties.
+- Use bullet points for each consequence.
+- Be specific, e.g., "₹100/day under Section 92 for each day of default."
+📚 Case Law Reference (if any):
+- Mention 1 real case if available (even a notable or illustrative one).
+📊 Real-Life Example:
+- Add a short, practical scenario showing how this law or consequence applies.
+- Use fictional names (e.g., "XYZ Pvt. Ltd.") if needed to illustrate.
+🛠️ Exception/Relief:
+- Mention if condonation is available (e.g., Form CG-1 filing, Condonation of Delay Scheme).
+- Mention amnesty schemes (e.g., CFSS 2020) if applicable.
+📌 Conclusion: Summary of action steps or legal advice in plain language.
+🛑 Disclaimer: Clearly mention that this is not legal advice, only general legal information.
+📝 Style:
+- Use bullet points and headings.
+- Use plain, professional English.
+- Always mention legal source references (acts, sections, rules, or MCA circulars).
+- Ensure answers are correct as per the latest Indian laws.
+"""
+        
+        prompt = f"""{system_prompt}
 
 Question: {query}
 
 {f"Relevant context from legal database: {context}" if context else ""}
 
-Please provide:
-1. A clear, accurate answer based on Indian law
-2. Relevant legal sections/acts if applicable
-3. Important disclaimers about consulting qualified legal professionals
-
-Format your response in a professional, helpful manner."""
+Please provide a comprehensive answer following the exact format specified above."""
 
         response = await asyncio.to_thread(model.generate_content, prompt)
         return response.text
@@ -157,7 +182,12 @@ def find_best_answer(query: str) -> Dict[str, Any]:
 # --- API Endpoints ---
 @app.get("/")
 async def health_check():
-    return {"message": "Law GPT API is running!", "knowledge_base_size": len(KNOWLEDGE_BASE)}
+    return {
+        "message": "⚖️ Law GPT Professional API v5.0 is running!",
+        "features": ["AI-Powered Responses", "Structured Legal Format", "Indian Law Expertise"],
+        "knowledge_base_size": len(KNOWLEDGE_BASE),
+        "ai_status": "Enabled" if GEMINI_API_KEY else "Disabled - Configure GEMINI_API_KEY"
+    }
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
