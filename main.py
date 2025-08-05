@@ -522,10 +522,10 @@ Please rephrase your query or consult with a legal professional for detailed gui
 {sections_text}
 • Source: {context}
 
-� **Legal Implications**:
+💼 **Legal Implications**:
 {answer[400:700] if len(answer) > 400 else 'Refer to complete legal text for detailed consequences and penalties.'}
 
-� **Key Points**:
+📚 **Key Points**:
 • This information is based on Indian legal database
 • Multiple legal precedents may apply
 • Specific circumstances affect legal interpretation
