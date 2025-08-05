@@ -27,7 +27,11 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_origins=[
+        "https://law-gpt-frontend-2-0.vercel.app",
+        "https://law-gpt-frontend-2-0-y3zc-1sfz8xujo-nivedhs-projects-ce31ae36.vercel.app",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -253,15 +257,22 @@ def get_legal_response(query: str) -> Dict[str, Any]:
     # Enhanced keyword matching for better query recognition
     company_keywords = ["company", "private limited", "annual return", "filing", "roc", "director", "compliance"]
     bail_keywords = ["bail", "anticipatory bail", "custody", "arrest"]
-    constitutional_keywords = ["article", "constitution", "fundamental right"]
-    criminal_keywords = ["ipc", "section", "murder", "theft", "fraud"]
-    
-    # Check for specific legal provisions
+    constitutional_keywords = ["article", "constitution", "fundamental right", "rights", "equality", "liberty"]
+    criminal_keywords = ["ipc", "section", "murder", "theft", "fraud", "criminal"]
+
+    # Check for specific legal provisions first
     for key, response_data in LEGAL_RESPONSES.items():
         if key in query_lower:
             return response_data
-    
-    # Enhanced company law detection
+
+    # Check for broader categories
+    if any(keyword in query_lower for keyword in constitutional_keywords):
+        if "14" in query_lower or "equality" in query_lower:
+            return LEGAL_RESPONSES["article 14"]
+        if "21" in query_lower or "life" in query_lower or "liberty" in query_lower:
+            return LEGAL_RESPONSES["article 21"]
+        return LEGAL_RESPONSES["article 14"] # Default to equality if general rights are asked
+
     if any(keyword in query_lower for keyword in company_keywords):
         if "annual return" in query_lower or "filing" in query_lower or "not filed" in query_lower:
             return LEGAL_RESPONSES["annual returns"]
@@ -269,9 +280,13 @@ def get_legal_response(query: str) -> Dict[str, Any]:
             return LEGAL_RESPONSES["private limited company"]
         else:
             return LEGAL_RESPONSES["company law"]
-    
-    # General legal guidance
-    if any(term in query_lower for term in ["bail", "anticipatory bail"]):
+
+    if any(keyword in query_lower for keyword in criminal_keywords):
+         if "302" in query_lower or "murder" in query_lower:
+            return LEGAL_RESPONSES["section 302 ipc"]
+         return LEGAL_RESPONSES["section 302 ipc"] # Default to a common criminal query
+
+    if any(term in query_lower for term in bail_keywords):
         return {
             "response": """**Bail Provisions in Indian Law**
 
