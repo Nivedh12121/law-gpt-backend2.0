@@ -496,6 +496,12 @@ Please rephrase your query or consult with a legal professional for detailed gui
     # Smart title extraction based on query
     if "void" in query.lower() and "voidable" in query.lower():
         title = "Void Agreement vs Voidable Contract - Indian Contract Act"
+        # Try to find better matches for void/voidable
+        for match in relevant_matches:
+            match_text = f"{match.get('question', '')} {match.get('answer', '')}".lower()
+            if "section 2" in match_text and ("void" in match_text or "voidable" in match_text):
+                answer = match.get("answer", answer)  # Use better match
+                break
     elif "section" in query.lower() and any(num in query for num in ["302", "420", "498"]):
         title = f"Indian Penal Code - {query}"
     elif "article" in query.lower():
@@ -512,10 +518,20 @@ Please rephrase your query or consult with a legal professional for detailed gui
     
     sections_text = f"• Sections: {', '.join(sections)}" if sections else "• Refer to relevant sections in the Act"
     
+    # Add specific knowledge for common queries
+    additional_info = ""
+    if "void" in query.lower() and "voidable" in query.lower():
+        additional_info = """
+
+🔍 **Key Differences**:
+• **Void Agreement**: Unenforceable from the beginning (Section 2(g))
+• **Voidable Contract**: Valid until cancelled by aggrieved party (Section 2(i))
+• **Legal Effect**: Void = No legal effect; Voidable = Legal until avoided"""
+
     return f"""⚖️ **{title}**
 
 📘 **Overview**: 
-{answer[:400]}{'...' if len(answer) > 400 else ''}
+{answer[:400]}{'...' if len(answer) > 400 else ''}{additional_info}
 
 📜 **Relevant Legal Provisions**:
 • Act/Law: Indian Contract Act, 1872 / Indian Penal Code / Constitution of India
