@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- Configuration ---
-DATA_DIRECTORY = "C:\\Users\\nived\\Downloads\\Kanoon data cleande-20250723T145657Z-1-001\\Kanoon data cleande"
+DATA_DIRECTORY = "data"
 CORS_ORIGINS = [
     "https://law-gpt-frontend-2-0.vercel.app",
     "https://law-gpt-frontend-2-0-y3zc-1sfz8xujo-nivedhs-projects-ce31ae36.vercel.app",
