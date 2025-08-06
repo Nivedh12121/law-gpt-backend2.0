@@ -160,8 +160,11 @@ def identify_legal_topic(text: str) -> str:
     
     # Criminal Law indicators
     if any(term in text_lower for term in [
-        "ipc", "indian penal code", "section 302", "section 420", "murder", 
-        "theft", "criminal", "punishment", "imprisonment"
+        "ipc", "indian penal code", "crpc", "code of criminal procedure", 
+        "section 302", "section 420", "section 436", "section 437", "section 438",
+        "murder", "theft", "criminal", "punishment", "imprisonment",
+        "bail", "bailable", "non-bailable", "anticipatory bail", "arrest",
+        "cognizable", "non-cognizable", "fir", "charge sheet", "investigation"
     ]):
         return "criminal_law"
     
@@ -419,6 +422,49 @@ Under Section 10 of the Indian Contract Act, 1872, a valid contract must contain
 
 🛑 **Legal Disclaimer**: 
 This information is for educational purposes only. Consult a qualified advocate for specific legal matters."""
+    
+    # Criminal Law - Bail queries
+    if any(term in query_lower for term in ["bailable", "non-bailable", "bail", "crpc", "criminal procedure"]):
+        return """⚖️ **Bailable vs Non-Bailable Offences - Code of Criminal Procedure**
+
+📘 **Overview**: 
+Under the Code of Criminal Procedure (CrPC), 1973, offences are classified as bailable and non-bailable based on severity and nature of crime.
+
+📜 **Relevant Legal Provisions**:
+• Act/Law: Code of Criminal Procedure, 1973
+• Section(s): 436, 437, 437A, 438
+• Key provisions: Bail classification, police powers, court discretion
+
+💼 **BAILABLE OFFENCES (Section 436)**:
+• **Right to Bail**: Accused has legal right to bail
+• **Police Powers**: Police can grant bail at station level
+• **No Discretion**: Court cannot refuse if proper surety provided
+• **Examples**: Simple hurt, theft under ₹5000, defamation, traffic violations
+
+💼 **NON-BAILABLE OFFENCES (Section 437)**:
+• **Discretionary Bail**: Court has discretion to grant or refuse
+• **No Police Bail**: Police cannot grant bail
+• **Serious Crimes**: Generally punishable with 3+ years imprisonment
+• **Examples**: Murder (IPC 302), rape (IPC 376), kidnapping, dacoity
+
+📚 **Key Differences**:
+• **Bailable**: Right to bail, police can grant, minimal court discretion
+• **Non-Bailable**: No right to bail, only court can grant, full judicial consideration
+• **Factors**: Nature of accusation, character of evidence, severity of punishment
+
+🛠️ **Special Provisions**:
+• **Section 437A**: Conditions for bail (surrender passport, reporting, etc.)
+• **Section 438**: Anticipatory bail for non-bailable offences
+• **Judicial Guidelines**: Supreme Court precedents on bail jurisprudence
+
+📌 **Practical Application**:
+1. Check offence classification in First Schedule CrPC
+2. For bailable: Apply to police or magistrate
+3. For non-bailable: Apply to magistrate/sessions court with detailed grounds
+4. Consider factors like flight risk, tampering potential, public safety
+
+🛑 **Legal Disclaimer**: 
+This information is for educational purposes only. Consult a qualified criminal lawyer for specific legal matters."""
     
     # Annual Return queries
     if any(term in query_lower for term in ["annual return", "not filed", "three years"]):
