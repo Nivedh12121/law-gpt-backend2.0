@@ -95,7 +95,7 @@ async def chat_endpoint(request: ChatRequest):
         query_lower = query.lower()
         if any(term in query_lower for term in ["contract", "agreement", "void", "voidable"]):
             topic = "contract_law"
-        elif any(term in query_lower for term in ["bail", "fir", "criminal", "ipc"]):
+        elif any(term in query_lower for term in ["bail", "fir", "criminal", "ipc", "mens rea", "actus reus", "murder", "culpable", "defamation"]):
             topic = "criminal_law"
         elif any(term in query_lower for term in ["company", "director", "roc"]):
             topic = "company_law"
@@ -109,8 +109,17 @@ async def chat_endpoint(request: ChatRequest):
         elif "essential elements" in query_lower and "contract" in query_lower:
             response = generate_contract_elements_response()
             confidence = 0.90
+        elif ("mens rea" in query_lower and "actus reus" in query_lower) or ("mens rea" in query_lower or "actus reus" in query_lower):
+            response = generate_mens_rea_actus_reus_response()
+            confidence = 0.95
         elif "bail" in query_lower:
             response = generate_bail_response()
+            confidence = 0.85
+        elif "section 138" in query_lower or "cheque bounce" in query_lower:
+            response = generate_section_138_response()
+            confidence = 0.90
+        elif "fir" in query_lower and ("file" in query_lower or "process" in query_lower):
+            response = generate_fir_process_response()
             confidence = 0.85
         else:
             response = generate_general_response(query, topic)
@@ -226,6 +235,195 @@ def generate_bail_response() -> str:
 • **No Police Bail**: Police cannot grant bail
 
 🛑 **Legal Disclaimer**: This information is for educational purposes only. Consult a qualified criminal lawyer for specific legal matters."""
+
+def generate_mens_rea_actus_reus_response() -> str:
+    return """⚖️ **Mens Rea and Actus Reus - Fundamental Principles of Indian Criminal Law**
+
+📘 **Overview**: These are the two essential elements that must be present for any criminal offense under Indian criminal law.
+
+📜 **Legal Foundation**: Indian Penal Code, 1860 & Criminal Jurisprudence Principles
+
+## 🧠 **MENS REA (Guilty Mind)**
+
+**Definition**: The mental element or criminal intent required for an offense.
+
+**Key Aspects**:
+• **Intent (Intention)**: Deliberate purpose to commit the crime
+• **Knowledge**: Awareness of facts that make the act criminal  
+• **Negligence**: Failure to exercise reasonable care
+• **Recklessness**: Conscious disregard of substantial risk
+
+**IPC Provisions**:
+• **Section 299**: Culpable homicide - "intention of causing death"
+• **Section 300**: Murder - "intention of causing death" with specific circumstances
+• **Section 415**: Cheating - "intention to deceive"
+
+## ⚡ **ACTUS REUS (Guilty Act)**
+
+**Definition**: The physical element - the actual criminal act or omission.
+
+**Key Components**:
+• **Voluntary Act**: Must be a conscious, willed movement
+• **Omission**: Failure to act when legally required
+• **Causation**: The act must cause the prohibited result
+• **Circumstances**: Surrounding conditions that make act criminal
+
+**Examples**:
+• **Theft (Section 378)**: Taking movable property (actus reus) + dishonest intention (mens rea)
+• **Murder (Section 300)**: Causing death (actus reus) + intention to kill (mens rea)
+
+## ⚖️ **BOTH ELEMENTS REQUIRED**
+
+**General Rule**: Both mens rea and actus reus must coincide for criminal liability.
+
+**Legal Maxim**: *"Actus non facit reum nisi mens sit rea"*
+- "An act does not make one guilty unless the mind is also guilty"
+
+## 🏛️ **Exceptions in Indian Law**:
+
+**1. Strict Liability Offenses**:
+• Some regulatory offenses don't require mens rea
+• Example: Food adulteration, traffic violations
+
+**2. Statutory Offenses**:
+• Legislature may create offenses without mens rea requirement
+• Example: Certain provisions under Motor Vehicles Act
+
+## 📊 **Practical Application**:
+
+| Crime | Actus Reus | Mens Rea |
+|-------|------------|----------|
+| **Theft** | Taking property | Dishonest intention |
+| **Murder** | Causing death | Intention to kill |
+| **Cheating** | Deceiving someone | Intention to deceive |
+| **Assault** | Use of force | Intention/knowledge of force |
+
+## 🏛️ **Case Law**:
+• **State of Maharashtra v. Mayer Hans George (1965)**: Established mens rea requirement
+• **Nathulal v. State of M.P. (1966)**: Actus reus without mens rea insufficient
+
+## 🔍 **Modern Developments**:
+• **Corporate Criminal Liability**: Application to companies
+• **Cyber Crimes**: Adaptation to digital offenses
+• **Environmental Crimes**: Strict liability trends
+
+🛑 **Legal Disclaimer**: 
+This information is for educational purposes only. Consult a qualified criminal lawyer for specific legal matters."""
+
+def generate_section_138_response() -> str:
+    return """⚖️ **Section 138 Negotiable Instruments Act - Cheque Bounce Penalties**
+
+📘 **Overview**: Section 138 of the Negotiable Instruments Act, 1881 deals with dishonor of cheque for insufficiency of funds.
+
+📜 **Legal Provisions**: Negotiable Instruments Act, 1881, Section 138, 139, 140, 141, 142
+
+## 💰 **SECTION 138 - DISHONOR OF CHEQUE**
+
+**Essential Elements**:
+• Cheque drawn on account maintained by accused
+• Cheque presented within 6 months of date or validity period
+• Cheque returned unpaid due to insufficient funds
+• Legal notice served within 30 days of information
+• Accused fails to pay within 15 days of notice
+
+## ⚖️ **PENALTIES**:
+
+**Imprisonment**: Up to 2 years
+**Fine**: Up to twice the amount of cheque
+**Both**: Imprisonment and fine can be imposed together
+
+## 📋 **PROCEDURE**:
+
+**1. Legal Notice (Mandatory)**:
+• Must be served within 30 days of cheque return
+• Should demand payment within 15 days
+• Proper service essential for prosecution
+
+**2. Complaint Filing**:
+• Within 30 days of notice period expiry
+• Only by payee or holder in due course
+• Before Metropolitan Magistrate
+
+**3. Court Proceedings**:
+• Summary trial procedure
+• Burden of proof on complainant initially
+• Section 139 creates presumption against accused
+
+## 🛡️ **DEFENSES AVAILABLE**:
+
+• **Valid Discharge**: Debt already paid
+• **No Consideration**: Cheque without consideration
+• **Limitation**: Notice not served properly
+• **Technical Defects**: In cheque or procedure
+
+## 🏛️ **Important Case Laws**:
+• **Rangappa v. Mohan (2010)**: Supreme Court on limitation
+• **Dashrath Rupsingh v. State of Maharashtra (2014)**: On territorial jurisdiction
+
+🛑 **Legal Disclaimer**: 
+This information is for educational purposes only. Consult a qualified advocate for specific legal matters."""
+
+def generate_fir_process_response() -> str:
+    return """⚖️ **FIR Filing Process - Section 154 CrPC**
+
+📘 **Overview**: First Information Report (FIR) is the first step in criminal justice process under Section 154 of Code of Criminal Procedure, 1973.
+
+📜 **Legal Provisions**: Code of Criminal Procedure, 1973, Section 154, 155, 156, 157
+
+## 🚨 **WHAT IS FIR?**
+
+**Definition**: First information about commission of cognizable offense given to police.
+
+**Key Features**:
+• **Cognizable Offenses Only**: Police can arrest without warrant
+• **Information Source**: Any person can give information
+• **Written Record**: Must be reduced to writing
+• **Free Copy**: Informant entitled to free copy
+
+## 📋 **FIR FILING PROCESS**:
+
+**Step 1: Approach Police Station**
+• Visit nearest police station having jurisdiction
+• Oral or written complaint can be made
+• No specific format required
+
+**Step 2: Information Recording**
+• Officer-in-charge must record information
+• Read over to informant and signed
+• FIR number and date assigned
+
+**Step 3: Copy Provision**
+• Free copy given to informant immediately
+• Copy signed by recording officer
+• Informant's signature obtained
+
+**Step 4: Investigation Begins**
+• Police duty-bound to investigate
+• Cannot refuse to register FIR
+• Investigation under Section 156
+
+## ⚖️ **LEGAL RIGHTS**:
+
+**Mandatory Registration**: Police cannot refuse cognizable offense
+**Free Copy**: No fee for FIR copy
+**Investigation**: Police must investigate
+**Zero FIR**: Can file in any police station
+
+## 🚫 **WHEN FIR NOT REQUIRED**:
+
+• **Non-cognizable Offenses**: Magistrate's permission needed
+• **Civil Disputes**: Not criminal matters
+• **False/Frivolous**: Malicious complaints
+
+## 🏛️ **Remedies if Police Refuses**:
+
+• **Superintendent of Police**: Complaint to SP
+• **Magistrate**: Under Section 156(3)
+• **High Court**: Writ petition
+• **Postal FIR**: By registered post
+
+🛑 **Legal Disclaimer**: 
+This information is for educational purposes only. Consult a qualified criminal lawyer for specific legal matters."""
 
 def generate_general_response(query: str, topic: str) -> str:
     return f"""⚖️ **Legal Query Response**
