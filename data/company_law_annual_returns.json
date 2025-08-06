@@ -1,0 +1,56 @@
+[
+  {
+    "question": "What are the legal consequences for a private limited company that has not filed annual returns for three years?",
+    "answer": "Non-filing of annual returns for three years results in severe legal consequences under the Companies Act, 2013:\n\n1. **Penalties under Section 92(5)**: Company liable to penalty of ₹5 lakh and every officer in default liable to penalty of ₹1 lakh\n\n2. **Additional penalty under Section 137**: Further penalty of ₹500 per day for continuing default\n\n3. **Director Disqualification under Section 164(2)**: Directors become disqualified if company fails to file annual returns for 3 consecutive financial years\n\n4. **ROC Action**: Registrar may initiate striking off proceedings under Section 248\n\n5. **Criminal Liability**: Officers may face imprisonment up to 6 months under Section 92(5)\n\n6. **Compliance Issues**: Company cannot file any other documents until annual returns are filed\n\n7. **Bank Account Freezing**: Banks may freeze accounts for non-compliant companies\n\n8. **Legal Standing**: Company loses legal standing for contracts and litigation",
+    "context": "Companies Act 2013 - Annual Return Filing Requirements",
+    "category": "company_law",
+    "subcategory": "annual_returns",
+    "sections": ["92", "137", "164", "248"],
+    "act": "Companies Act 2013"
+  },
+  {
+    "question": "What is Section 92 of Companies Act 2013 regarding annual returns?",
+    "answer": "Section 92 of the Companies Act, 2013 mandates annual return filing:\n\n**Key Provisions:**\n1. **Filing Requirement**: Every company must file annual return within 60 days of AGM\n2. **Form**: Private companies file Form MGT-7, Public companies file Form MGT-7A\n3. **Contents**: Must include shareholding pattern, director details, registered office details\n4. **Penalty**: ₹5 lakh for company + ₹1 lakh for every officer in default\n5. **Continuing Penalty**: ₹500 per day after initial penalty\n6. **Criminal Liability**: Imprisonment up to 6 months for officers\n\n**Due Dates:**\n- Within 60 days of AGM\n- If no AGM held, within 60 days of due date of AGM\n\n**Consequences of Non-filing:**\n- Heavy penalties\n- Director disqualification after 3 years\n- ROC action for striking off\n- Loss of legal standing",
+    "context": "Companies Act 2013 Section 92 - Annual Return",
+    "category": "company_law",
+    "subcategory": "annual_returns",
+    "sections": ["92"],
+    "act": "Companies Act 2013"
+  },
+  {
+    "question": "What is Section 164(2) director disqualification for non-filing of annual returns?",
+    "answer": "Section 164(2) of Companies Act, 2013 provides for automatic director disqualification:\n\n**Disqualification Trigger:**\n- Company fails to file annual returns for 3 consecutive financial years\n- Applies to all directors of such company\n\n**Automatic Effect:**\n- Directors become disqualified automatically\n- No separate order required\n- Disqualification is immediate upon completion of 3 years\n\n**Consequences:**\n- Cannot be appointed as director in any company\n- Must vacate directorship in all companies\n- Disqualification continues until compliance\n\n**Relief Mechanism:**\n- File all pending annual returns\n- Pay prescribed penalties\n- Apply for removal of disqualification\n\n**Penalty for Acting While Disqualified:**\n- ₹5 lakh penalty\n- Imprisonment up to 6 months\n- Company also liable to penalty\n\n**Important Note:**\nDisqualification is automatic and does not require any adjudication process.",
+    "context": "Companies Act 2013 Section 164(2) - Director Disqualification",
+    "category": "company_law",
+    "subcategory": "director_liability",
+    "sections": ["164"],
+    "act": "Companies Act 2013"
+  },
+  {
+    "question": "What is Section 137 penalty for non-filing of annual returns?",
+    "answer": "Section 137 of Companies Act, 2013 provides additional penalty for non-filing:\n\n**Penalty Structure:**\n- ₹500 per day for continuing default\n- Applies after initial penalty under Section 92\n- No upper limit specified\n\n**Calculation:**\n- Starts from the due date of filing\n- Continues until actual filing\n- Can accumulate to lakhs of rupees\n\n**Who is Liable:**\n- Company\n- Every officer in default\n- Directors personally liable\n\n**Example Calculation:**\nFor 3 years default (1095 days):\n- Section 137 penalty: ₹500 × 1095 = ₹5,47,500\n- Plus Section 92 penalty: ₹5,00,000 (company) + ₹1,00,000 per director\n- Total can exceed ₹10 lakhs easily\n\n**Recovery:**\n- ROC can recover as arrears of land revenue\n- Attachment of company assets\n- Personal liability of directors\n\n**Relief:**\n- Compounding possible under Section 441\n- Reduced penalty on voluntary compliance",
+    "context": "Companies Act 2013 Section 137 - Continuing Penalty",
+    "category": "company_law",
+    "subcategory": "penalties",
+    "sections": ["137"],
+    "act": "Companies Act 2013"
+  },
+  {
+    "question": "What is Section 248 striking off for non-filing companies?",
+    "answer": "Section 248 of Companies Act, 2013 empowers ROC to strike off non-compliant companies:\n\n**Grounds for Striking Off:**\n- Non-filing of annual returns for 2 consecutive years\n- Non-filing of financial statements\n- Company not carrying on business\n\n**Procedure:**\n1. **Show Cause Notice**: ROC issues notice to company\n2. **30 Days Response**: Company gets 30 days to respond\n3. **Striking Off Order**: If no satisfactory response\n4. **Publication**: Notice published in Official Gazette\n\n**Consequences:**\n- Company ceases to exist legally\n- Assets vest in Central Government\n- Directors face restrictions\n- Bank accounts frozen\n\n**Restoration Process:**\n- Application under Section 252\n- Payment of all dues and penalties\n- Valid reasons for non-compliance\n- Court approval required\n\n**Timeline:**\n- Usually initiated after 2 years of default\n- Process takes 6-12 months\n- Irreversible without restoration\n\n**Protection:**\n- File pending returns immediately\n- Respond to show cause notice\n- Regularize all compliances",
+    "context": "Companies Act 2013 Section 248 - Striking Off",
+    "category": "company_law",
+    "subcategory": "striking_off",
+    "sections": ["248", "252"],
+    "act": "Companies Act 2013"
+  },
+  {
+    "question": "How to file pending annual returns for 3 years default?",
+    "answer": "Process to file pending annual returns after 3 years default:\n\n**Step 1: Preparation**\n- Gather all financial records for 3 years\n- Update director and shareholder details\n- Prepare board resolutions\n\n**Step 2: Filing Sequence**\n- File in chronological order (oldest first)\n- Cannot skip any year\n- Each year requires separate filing\n\n**Step 3: Forms Required**\n- Form MGT-7 (Annual Return)\n- Form AOC-4 (Financial Statements)\n- Form MGT-14 (Board Resolutions)\n\n**Step 4: Penalty Payment**\n- Calculate total penalty (Section 92 + 137)\n- Pay through MCA portal\n- Obtain payment receipts\n\n**Step 5: Additional Compliance**\n- Update registered office details\n- File any pending event-based forms\n- Ensure DIN/DSC validity\n\n**Estimated Costs:**\n- Government fees: ₹1,000 per year\n- Penalties: ₹5-10 lakhs (depending on delay)\n- Professional fees: ₹50,000-1,00,000\n\n**Timeline:**\n- 15-30 days if all documents ready\n- May face ROC queries\n- Director disqualification removed after filing",
+    "context": "Companies Act 2013 - Annual Return Filing Process",
+    "category": "company_law",
+    "subcategory": "compliance_process",
+    "sections": ["92", "137"],
+    "act": "Companies Act 2013"
+  }
+]

@@ -308,11 +308,15 @@ def semantic_similarity(query_tokens: List[str], doc_tokens: List[str]) -> float
     return min(total_score, 10.0)  # Cap the score to prevent overflow
 
 def find_best_matches(query: str, top_k: int = 3) -> List[Dict[str, Any]]:
-    """Enhanced search that finds multiple relevant matches"""
+    """Enhanced search with topic validation and relevance filtering"""
     query_tokens = advanced_tokenize(query)
+    query_lower = query.lower()
     
     if not query_tokens:
         return []
+    
+    # Extract key topics from query for validation
+    query_topics = extract_query_topics(query_lower)
     
     scored_items = []
     corpus_size = len(KNOWLEDGE_BASE)
@@ -329,6 +333,14 @@ def find_best_matches(query: str, top_k: int = 3) -> List[Dict[str, Any]]:
         if not doc_tokens:
             continue
         
+        # Topic relevance check - CRITICAL FIX
+        doc_topics = extract_query_topics(full_text.lower())
+        topic_relevance = calculate_topic_relevance(query_topics, doc_topics)
+        
+        # Skip if topic relevance is too low (prevents CSR answers for annual return questions)
+        if topic_relevance < 0.3 and query_topics:
+            continue
+        
         # Calculate multiple similarity scores
         tfidf_score = calculate_tfidf_score(query_tokens, doc_tokens, corpus_size)
         semantic_score = semantic_similarity(query_tokens, doc_tokens)
@@ -337,8 +349,14 @@ def find_best_matches(query: str, top_k: int = 3) -> List[Dict[str, Any]]:
         question_tokens = advanced_tokenize(question)
         question_score = semantic_similarity(query_tokens, question_tokens) * 2
         
-        # Combined score
-        total_score = tfidf_score + semantic_score + question_score
+        # Legal keyword matching boost
+        legal_keyword_boost = calculate_legal_keyword_boost(query_lower, full_text.lower())
+        
+        # Section number matching boost
+        section_boost = calculate_section_boost(query_lower, full_text.lower())
+        
+        # Combined score with topic relevance
+        total_score = (tfidf_score + semantic_score + question_score + legal_keyword_boost + section_boost) * (1 + topic_relevance)
         
         if total_score > 0:
             scored_items.append({
@@ -346,12 +364,95 @@ def find_best_matches(query: str, top_k: int = 3) -> List[Dict[str, Any]]:
                 "score": total_score,
                 "tfidf": tfidf_score,
                 "semantic": semantic_score,
-                "question": question_score
+                "question": question_score,
+                "topic_relevance": topic_relevance,
+                "legal_boost": legal_keyword_boost,
+                "section_boost": section_boost
             })
     
     # Sort by score and return top matches
     scored_items.sort(key=lambda x: x["score"], reverse=True)
+    
+    # Additional validation: ensure top result is actually relevant
+    if scored_items and scored_items[0]["topic_relevance"] < 0.2:
+        # If top result has very low topic relevance, return empty to trigger AI generation
+        return []
+    
     return [item["item"] for item in scored_items[:top_k]]
+
+def extract_query_topics(text: str) -> set:
+    """Extract key legal topics from query"""
+    topics = set()
+    
+    # Company Law topics
+    if any(word in text for word in ["annual return", "annual filing", "form aoc", "form mgr", "roc filing"]):
+        topics.add("annual_returns")
+    if any(word in text for word in ["csr", "corporate social responsibility", "csr consultant", "csr compliance"]):
+        topics.add("csr")
+    if any(word in text for word in ["director", "disqualification", "director penalty"]):
+        topics.add("director_liability")
+    if any(word in text for word in ["companies act", "company law", "private limited", "public limited"]):
+        topics.add("company_law")
+    
+    # Contract Law topics
+    if any(word in text for word in ["contract", "agreement", "void", "voidable", "consideration"]):
+        topics.add("contract_law")
+    
+    # Criminal Law topics
+    if any(word in text for word in ["ipc", "section 302", "section 420", "criminal", "punishment"]):
+        topics.add("criminal_law")
+    
+    # Constitutional Law topics
+    if any(word in text for word in ["article", "fundamental right", "constitution", "article 14", "article 21"]):
+        topics.add("constitutional_law")
+    
+    return topics
+
+def calculate_topic_relevance(query_topics: set, doc_topics: set) -> float:
+    """Calculate topic relevance score"""
+    if not query_topics or not doc_topics:
+        return 0.5  # Neutral if no topics identified
+    
+    intersection = query_topics.intersection(doc_topics)
+    union = query_topics.union(doc_topics)
+    
+    if not union:
+        return 0.5
+    
+    return len(intersection) / len(union)
+
+def calculate_legal_keyword_boost(query: str, doc_text: str) -> float:
+    """Calculate boost based on legal keyword matching"""
+    boost = 0.0
+    
+    # Companies Act specific keywords
+    companies_keywords = ["companies act", "section 92", "section 137", "section 164", "roc", "registrar", "annual return", "form aoc", "form mgr"]
+    for keyword in companies_keywords:
+        if keyword in query and keyword in doc_text:
+            boost += 0.3
+    
+    # Legal procedure keywords
+    procedure_keywords = ["penalty", "fine", "imprisonment", "disqualification", "compliance", "non-compliance"]
+    for keyword in procedure_keywords:
+        if keyword in query and keyword in doc_text:
+            boost += 0.2
+    
+    return min(boost, 1.0)  # Cap at 1.0
+
+def calculate_section_boost(query: str, doc_text: str) -> float:
+    """Calculate boost based on section number matching"""
+    boost = 0.0
+    
+    # Extract section numbers from query
+    query_sections = re.findall(r'section\s*(\d+)', query)
+    doc_sections = re.findall(r'section\s*(\d+)', doc_text)
+    
+    # Boost for matching section numbers
+    for section in query_sections:
+        if section in doc_sections:
+            boost += 0.5
+    
+    return min(boost, 1.0)  # Cap at 1.0
 
 # --- FastAPI App Initialization ---
 app = FastAPI(
@@ -396,6 +497,19 @@ async def get_ai_response(query: str, context: str = "", relevant_matches: List[
         
         system_prompt = """
 You are Law GPT – a specialized AI-powered Indian legal assistant with expertise in Indian jurisprudence.
+
+CRITICAL INSTRUCTION: You must ONLY answer the specific legal question asked. If the provided context does not match the query topic, you must reject it and provide a direct answer based on your legal knowledge.
+
+TOPIC VALIDATION RULES:
+- If asked about "annual returns" or "company filing", DO NOT answer about CSR or other topics
+- If asked about "IPC sections", DO NOT answer about company law
+- If asked about "constitutional articles", DO NOT answer about criminal law
+- Always ensure your answer directly addresses the specific legal question asked
+
+REJECTION CRITERIA:
+- If context talks about CSR but query is about annual returns → REJECT context
+- If context talks about contracts but query is about criminal law → REJECT context  
+- If context is completely unrelated to the query → REJECT context
 Your responses must be accurate, well-structured, and professionally formatted.
 
 MANDATORY RESPONSE FORMAT:
@@ -443,14 +557,30 @@ QUALITY REQUIREMENTS:
 - Ensure factual accuracy
 """
         
-        # Enhanced context preparation
+        # Enhanced context preparation with topic validation
         context_section = ""
         if relevant_matches:
-            context_section = "\n\nRELEVANT LEGAL DATABASE CONTEXT:\n"
-            for i, match in enumerate(relevant_matches[:2], 1):
-                question = match.get("question", "")
-                answer = match.get("answer", "")[:300]  # Truncate long answers
-                context_section += f"{i}. Q: {question}\n   A: {answer}...\n\n"
+            # Validate context relevance
+            query_topics = extract_query_topics(query.lower())
+            validated_matches = []
+            
+            for match in relevant_matches[:3]:
+                match_text = f"{match.get('question', '')} {match.get('answer', '')}"
+                match_topics = extract_query_topics(match_text.lower())
+                relevance = calculate_topic_relevance(query_topics, match_topics)
+                
+                # Only include highly relevant matches
+                if relevance > 0.4 or not query_topics:
+                    validated_matches.append(match)
+            
+            if validated_matches:
+                context_section = "\n\nRELEVANT LEGAL DATABASE CONTEXT:\n"
+                for i, match in enumerate(validated_matches[:2], 1):
+                    question = match.get("question", "")
+                    answer = match.get("answer", "")[:400]  # Slightly longer for better context
+                    context_section += f"{i}. Q: {question}\n   A: {answer}...\n\n"
+            else:
+                context_section = "\n\nNOTE: No highly relevant context found in database. Provide answer based on legal knowledge.\n"
         
         prompt = f"""{system_prompt}
 
