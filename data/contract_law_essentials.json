@@ -1,0 +1,47 @@
+[
+  {
+    "question": "What are the essential elements of a valid contract under the Indian Contract Act, 1872?",
+    "answer": "Under Section 10 of the Indian Contract Act, 1872, a valid contract must have the following essential elements:\n\n**1. Offer and Acceptance (Section 2(a) & 2(b))**\n- Clear offer by one party\n- Unconditional acceptance by another party\n- Communication of both offer and acceptance\n\n**2. Lawful Consideration (Section 2(d))**\n- Something in return (money, goods, services, promise)\n- Must be real and lawful\n- Can be past, present, or future\n- Consideration must move from the promisee\n\n**3. Capacity of Parties (Section 11)**\n- Parties must be of sound mind\n- Must have attained age of majority (18 years)\n- Must not be disqualified by law\n\n**4. Free Consent (Section 13-22)**\n- Consent not obtained by coercion, undue influence, fraud, misrepresentation, or mistake\n- Both parties must agree upon the same thing in the same sense\n\n**5. Lawful Object (Section 23)**\n- Object of contract must be lawful\n- Must not be forbidden by law\n- Must not defeat provisions of any law\n- Must not be fraudulent, immoral, or opposed to public policy\n\n**6. Not Expressly Declared Void**\n- Contract must not fall under agreements expressly declared void (Sections 24-30)\n- Examples: Agreements in restraint of marriage, trade, legal proceedings\n\n**Legal Consequences of Invalid Contracts:**\n- Void contracts: No legal effect from beginning\n- Voidable contracts: Valid until avoided by aggrieved party\n- Unenforceable contracts: Cannot be enforced in court",
+    "context": "Indian Contract Act 1872 - Essential Elements",
+    "category": "contract_law",
+    "subcategory": "essential_elements",
+    "sections": ["10", "11", "13", "23"],
+    "act": "Indian Contract Act 1872"
+  },
+  {
+    "question": "What is Section 10 of Indian Contract Act 1872?",
+    "answer": "Section 10 of the Indian Contract Act, 1872 defines what agreements are contracts:\n\n**Section 10 Text:**\n\"All agreements are contracts if they are made by the free consent of parties competent to contract, for a lawful consideration and with a lawful object, and are not hereby expressly declared to be void.\"\n\n**Key Components:**\n1. **Free Consent**: Agreement without coercion, undue influence, fraud, misrepresentation, or mistake\n2. **Competent Parties**: Parties must have legal capacity to contract\n3. **Lawful Consideration**: Something valuable given in exchange\n4. **Lawful Object**: Purpose must be legal and not against public policy\n5. **Not Declared Void**: Must not fall under void agreements\n\n**Practical Application:**\nFor a contract to be legally enforceable, ALL five elements must be present. If any element is missing, the agreement may be:\n- Void (no legal effect)\n- Voidable (can be cancelled by one party)\n- Unenforceable (cannot be enforced in court)\n\n**Examples:**\n- Valid Contract: Sale of goods with proper consideration and consent\n- Invalid Contract: Agreement to commit a crime (unlawful object)\n- Voidable Contract: Agreement obtained by fraud",
+    "context": "Indian Contract Act 1872 Section 10",
+    "category": "contract_law",
+    "subcategory": "section_10",
+    "sections": ["10"],
+    "act": "Indian Contract Act 1872"
+  },
+  {
+    "question": "What is offer and acceptance in contract law?",
+    "answer": "Offer and Acceptance are fundamental elements of contract formation under the Indian Contract Act, 1872:\n\n**OFFER (Section 2(a)):**\nDefinition: When one person signifies to another his willingness to do or abstain from doing anything, with a view to obtaining the assent of that other to such act or abstinence, he is said to make a proposal/offer.\n\n**Essential Elements of Valid Offer:**\n1. Must be communicated to the offeree\n2. Must be clear and definite\n3. Must show intention to create legal relations\n4. May be express or implied\n5. May be specific (to particular person) or general (to world at large)\n\n**ACCEPTANCE (Section 2(b)):**\nDefinition: When the person to whom the proposal is made signifies his assent thereto, the proposal is said to be accepted.\n\n**Essential Elements of Valid Acceptance:**\n1. Must be absolute and unqualified\n2. Must be communicated to the offeror\n3. Must be made while offer is still open\n4. Must be made by the person to whom offer was made\n5. Must be made in the prescribed manner\n\n**Legal Rules:**\n- Acceptance must mirror the offer exactly (mirror image rule)\n- Counter-offer destroys original offer\n- Acceptance can be withdrawn before communication\n- Silence generally does not constitute acceptance\n\n**Communication Rules (Section 4):**\n- Offer complete when it comes to knowledge of offeree\n- Acceptance complete when put in course of transmission\n- Revocation complete when it comes to knowledge of other party",
+    "context": "Indian Contract Act 1872 - Offer and Acceptance",
+    "category": "contract_law",
+    "subcategory": "offer_acceptance",
+    "sections": ["2", "4"],
+    "act": "Indian Contract Act 1872"
+  },
+  {
+    "question": "What is consideration in contract law under Indian Contract Act?",
+    "answer": "Consideration is a crucial element of valid contracts under the Indian Contract Act, 1872:\n\n**Definition (Section 2(d)):**\nWhen, at the desire of the promisor, the promisee or any other person has done or abstained from doing, or does or abstains from doing, or promises to do or abstain from doing something, such act or abstinence or promise is called consideration for the promise.\n\n**Essential Elements:**\n1. **Must move from promisee**: Consideration must be provided by the promisee or someone on their behalf\n2. **Must be at desire of promisor**: Act must be done at the request of the promisor\n3. **Must be real**: Cannot be illusory or impossible\n4. **Must be lawful**: Cannot be illegal or immoral\n\n**Types of Consideration:**\n1. **Past Consideration**: Act done before the promise\n2. **Present Consideration**: Act done simultaneously with promise\n3. **Future Consideration**: Promise to do something in future\n\n**Legal Principles:**\n- Consideration need not be adequate but must be sufficient\n- Love and affection can be consideration between near relatives\n- Consideration must have some value in the eyes of law\n- Stranger to consideration can sue (unlike English law)\n\n**Exceptions to 'No Consideration, No Contract' Rule (Section 25):**\n1. Natural love and affection (written, registered, between near relatives)\n2. Voluntary compensation for past services\n3. Promise to pay time-barred debt\n\n**Case Law:**\nChinaya vs. Ramaya: Even ₹1 can be valid consideration if parties agree",
+    "context": "Indian Contract Act 1872 - Consideration",
+    "category": "contract_law",
+    "subcategory": "consideration",
+    "sections": ["2", "25"],
+    "act": "Indian Contract Act 1872"
+  },
+  {
+    "question": "What is free consent in contract law?",
+    "answer": "Free Consent is essential for valid contracts under Sections 13-22 of the Indian Contract Act, 1872:\n\n**Definition (Section 13):**\nTwo or more persons are said to consent when they agree upon the same thing in the same sense.\n\n**Free Consent (Section 14):**\nConsent is said to be free when it is not caused by:\n1. **Coercion (Section 15)**\n2. **Undue Influence (Section 16)**\n3. **Fraud (Section 17)**\n4. **Misrepresentation (Section 18)**\n5. **Mistake (Section 20-22)**\n\n**1. COERCION (Section 15):**\n- Committing or threatening to commit any act forbidden by IPC\n- Unlawful detaining or threatening to detain property\n- Effect: Contract voidable at option of party whose consent was coerced\n\n**2. UNDUE INFLUENCE (Section 16):**\n- When one party dominates the will of another\n- Relationship examples: Parent-child, Doctor-patient, Lawyer-client\n- Effect: Contract voidable at option of dominated party\n\n**3. FRAUD (Section 17):**\n- Intentional misrepresentation of facts\n- Concealment of material facts\n- Promise without intention to perform\n- Effect: Contract voidable + damages possible\n\n**4. MISREPRESENTATION (Section 18):**\n- Innocent/unintentional false statement\n- Breach of duty without intent to deceive\n- Effect: Contract voidable but no damages\n\n**5. MISTAKE:**\n- Mistake of fact: Makes contract void\n- Mistake of law: Generally no relief\n- Bilateral mistake: Contract void\n- Unilateral mistake: Generally valid contract",
+    "context": "Indian Contract Act 1872 - Free Consent",
+    "category": "contract_law",
+    "subcategory": "free_consent",
+    "sections": ["13", "14", "15", "16", "17", "18", "20"],
+    "act": "Indian Contract Act 1872"
+  }
+]

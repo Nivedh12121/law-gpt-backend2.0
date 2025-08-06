@@ -140,35 +140,88 @@ def semantic_similarity(tokens1: List[str], tokens2: List[str]) -> float:
     
     return min(base_similarity + legal_boost, 1.0)
 
+def identify_legal_topic(text: str) -> str:
+    """Identify the primary legal topic from query text"""
+    text_lower = text.lower()
+    
+    # Contract Law indicators
+    if any(term in text_lower for term in [
+        "contract", "agreement", "offer", "acceptance", "consideration", 
+        "essential elements", "valid contract", "indian contract act", "section 10"
+    ]):
+        return "contract_law"
+    
+    # Company Law indicators  
+    if any(term in text_lower for term in [
+        "company", "companies act", "annual return", "director", "roc", 
+        "registrar", "compliance", "mgr", "aoc", "section 92", "section 137"
+    ]):
+        return "company_law"
+    
+    # Criminal Law indicators
+    if any(term in text_lower for term in [
+        "ipc", "indian penal code", "section 302", "section 420", "murder", 
+        "theft", "criminal", "punishment", "imprisonment"
+    ]):
+        return "criminal_law"
+    
+    # Constitutional Law indicators
+    if any(term in text_lower for term in [
+        "constitution", "article", "fundamental rights", "article 14", 
+        "article 21", "supreme court", "constitutional"
+    ]):
+        return "constitutional_law"
+    
+    # Property Law indicators
+    if any(term in text_lower for term in [
+        "property", "land", "registration", "sale deed", "mortgage", "ownership"
+    ]):
+        return "property_law"
+    
+    return "general_law"
+
 def find_best_matches(query: str, knowledge_base: List[Dict], top_k: int = 3) -> List[Dict[str, Any]]:
-    """Find best matching documents for the query"""
+    """Find best matching documents with enhanced topic filtering"""
     query_tokens = advanced_tokenize(query)
     
     if not query_tokens:
         return []
     
+    # Identify query topic
+    query_topic = identify_legal_topic(query)
+    query_lower = query.lower()
+    
     scored_items = []
     corpus_size = len(knowledge_base)
-    
-    # Check for specific company law topics
-    query_lower = query.lower()
-    is_annual_return_query = any(term in query_lower for term in [
-        "annual return", "annual filing", "not filed", "non-filing", "three years", "roc"
-    ])
     
     for item in knowledge_base:
         question = item.get("question", "")
         answer = item.get("answer", "")
         context = item.get("context", "")
+        category = item.get("category", "")
         
-        # Skip CSR-related content for annual return queries
-        if is_annual_return_query:
-            item_text = f"{question} {answer} {context}".lower()
-            if "csr" in item_text and "annual return" not in item_text:
+        # Combine all text for analysis
+        full_text = f"{question} {answer} {context}"
+        item_topic = identify_legal_topic(full_text)
+        
+        # Strong topic filtering - skip if topics don't match
+        if query_topic != "general_law" and item_topic != "general_law":
+            if query_topic != item_topic:
+                # Additional check for category field
+                if category and category != query_topic:
+                    continue
+        
+        # Special filtering for specific cases
+        if "contract" in query_lower and "essential elements" in query_lower:
+            # For contract essentials, only include contract law content
+            if "companies act" in full_text.lower() or "annual return" in full_text.lower():
                 continue
         
-        # Combine all text for scoring
-        full_text = f"{question} {answer} {context}"
+        if "annual return" in query_lower or "not filed" in query_lower:
+            # For annual returns, exclude contract law content
+            if "contract act" in full_text.lower() or "offer" in full_text.lower():
+                continue
+        
         doc_tokens = advanced_tokenize(full_text)
         
         if not doc_tokens:
@@ -182,13 +235,17 @@ def find_best_matches(query: str, knowledge_base: List[Dict], top_k: int = 3) ->
         question_tokens = advanced_tokenize(question)
         question_score = semantic_similarity(query_tokens, question_tokens) * 2
         
-        # Combined score
-        total_score = tfidf_score + semantic_score + question_score
+        # Topic matching boost
+        topic_boost = 0.5 if query_topic == item_topic else 0
+        
+        # Combined score with topic boost
+        total_score = tfidf_score + semantic_score + question_score + topic_boost
         
         if total_score > 0:
             scored_items.append({
                 "item": item,
-                "score": total_score
+                "score": total_score,
+                "topic": item_topic
             })
     
     # Sort by score and return top matches
@@ -319,8 +376,52 @@ Please rephrase your query or consult with a legal professional for detailed gui
     answer = primary_match.get("answer", "")
     question = primary_match.get("question", "")
     
-    # For annual return queries, provide specific response
-    if any(term in query.lower() for term in ["annual return", "not filed", "three years"]):
+    # Topic-specific responses
+    query_lower = query.lower()
+    
+    # Contract Law - Essential Elements
+    if any(term in query_lower for term in ["essential elements", "valid contract", "contract act"]):
+        return """⚖️ **Essential Elements of Valid Contract - Indian Contract Act, 1872**
+
+📘 **Overview**: 
+Under Section 10 of the Indian Contract Act, 1872, a valid contract must contain all essential elements for legal enforceability.
+
+📜 **Relevant Legal Provisions**:
+• Act/Law: Indian Contract Act, 1872
+• Section(s): 10, 11, 13-22, 23
+• Key provision: "All agreements are contracts if made by free consent of competent parties for lawful consideration and lawful object"
+
+💼 **Essential Elements (Section 10)**:
+• **Offer & Acceptance**: Clear proposal and unconditional acceptance
+• **Lawful Consideration**: Something valuable given in exchange (money, goods, services, promise)
+• **Capacity of Parties**: Parties must be of sound mind, major (18+), not disqualified by law
+• **Free Consent**: No coercion, undue influence, fraud, misrepresentation, or mistake
+• **Lawful Object**: Purpose must be legal and not against public policy
+• **Not Declared Void**: Must not fall under void agreements (Sections 24-30)
+
+📚 **Legal Consequences**:
+• **Valid Contract**: Legally enforceable, breach leads to damages
+• **Void Contract**: No legal effect from beginning
+• **Voidable Contract**: Valid until cancelled by aggrieved party
+• **Unenforceable Contract**: Cannot be enforced in court
+
+🛠️ **Practical Application**:
+• ALL elements must be present for validity
+• Missing any element makes contract invalid
+• Courts examine each element separately
+• Burden of proof on party claiming validity
+
+📌 **Key Sections to Remember**:
+1. Section 10: Definition of valid contract
+2. Section 11: Capacity to contract
+3. Sections 13-22: Free consent provisions
+4. Section 23: Lawful consideration and object
+
+🛑 **Legal Disclaimer**: 
+This information is for educational purposes only. Consult a qualified advocate for specific legal matters."""
+    
+    # Annual Return queries
+    if any(term in query_lower for term in ["annual return", "not filed", "three years"]):
         return """⚖️ **Non-Filing of Annual Returns - Legal Consequences**
 
 📘 **Overview**: 
