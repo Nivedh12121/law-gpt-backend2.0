@@ -557,30 +557,14 @@ QUALITY REQUIREMENTS:
 - Ensure factual accuracy
 """
         
-        # Enhanced context preparation with topic validation
+        # Enhanced context preparation
         context_section = ""
         if relevant_matches:
-            # Validate context relevance
-            query_topics = extract_query_topics(query.lower())
-            validated_matches = []
-            
-            for match in relevant_matches[:3]:
-                match_text = f"{match.get('question', '')} {match.get('answer', '')}"
-                match_topics = extract_query_topics(match_text.lower())
-                relevance = calculate_topic_relevance(query_topics, match_topics)
-                
-                # Only include highly relevant matches
-                if relevance > 0.4 or not query_topics:
-                    validated_matches.append(match)
-            
-            if validated_matches:
-                context_section = "\n\nRELEVANT LEGAL DATABASE CONTEXT:\n"
-                for i, match in enumerate(validated_matches[:2], 1):
-                    question = match.get("question", "")
-                    answer = match.get("answer", "")[:400]  # Slightly longer for better context
-                    context_section += f"{i}. Q: {question}\n   A: {answer}...\n\n"
-            else:
-                context_section = "\n\nNOTE: No highly relevant context found in database. Provide answer based on legal knowledge.\n"
+            context_section = "\n\nRELEVANT LEGAL DATABASE CONTEXT:\n"
+            for i, match in enumerate(relevant_matches[:2], 1):
+                question = match.get("question", "")
+                answer = match.get("answer", "")[:400]  # Truncate long answers
+                context_section += f"{i}. Q: {question}\n   A: {answer}...\n\n"
         
         prompt = f"""{system_prompt}
 
