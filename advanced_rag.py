@@ -51,7 +51,10 @@ class TopicClassifier:
                     "contract", "agreement", "offer", "acceptance", "consideration", 
                     "essential elements", "valid contract", "indian contract act", 
                     "section 10", "breach", "damages", "specific performance",
-                    "void", "voidable", "unenforceable", "capacity", "consent"
+                    "void", "voidable", "unenforceable", "capacity", "consent",
+                    "contract review", "review contract", "contract analysis",
+                    "contract terms", "contract clauses", "contract drafting",
+                    "employment contract", "service contract", "sale contract"
                 ],
                 "acts": ["indian contract act 1872"],
                 "sections": ["10", "11", "13", "14", "15", "16", "17", "18", "23"]
@@ -103,6 +106,16 @@ class TopicClassifier:
                 ],
                 "acts": ["the copyright act 1957", "the trademarks act 1999", "the patents act 1970"],
                 "sections": ["13", "14", "17", "51", "2", "9", "11", "28", "29", "3", "48"]
+            },
+            "general_law": {
+                "keywords": [
+                    "legal rights", "rights", "legal help", "legal advice", "legal assistance",
+                    "help me with", "what are my rights", "legal guidance", "legal support",
+                    "legal consultation", "legal query", "legal question", "law help",
+                    "legal information", "legal matter", "legal issue", "legal problem"
+                ],
+                "acts": ["constitution of india 1950", "indian contract act 1872"],
+                "sections": ["14", "19", "21", "10"]
             }
         }
     
@@ -137,10 +150,23 @@ class TopicClassifier:
         
         # Find best topic
         if not topic_scores or max(topic_scores.values()) == 0:
-            return "general_law", 0.0
+            # If no keywords match, try to infer from query structure
+            if any(word in query_lower for word in ["contract", "agreement", "review"]):
+                return "contract_law", 0.5
+            elif any(word in query_lower for word in ["rights", "help", "legal"]):
+                return "general_law", 0.5
+            elif any(word in query_lower for word in ["company", "director", "annual"]):
+                return "company_law", 0.5
+            else:
+                return "general_law", 0.3
         
         best_topic = max(topic_scores, key=topic_scores.get)
-        confidence = topic_scores[best_topic] / sum(topic_scores.values())
+        total_score = sum(topic_scores.values())
+        confidence = topic_scores[best_topic] / total_score if total_score > 0 else 0.5
+        
+        # Ensure minimum confidence for matched topics
+        if confidence < 0.3:
+            confidence = 0.5
         
         return best_topic, confidence
     
@@ -189,24 +215,40 @@ class AdvancedRetriever:
         
         logger.info(f"Built retrieval index with {len(documents)} documents")
     
-    def _topic_filter(self, query_topic: str, top_k: int = 30) -> List[int]:
+    def _topic_filter(self, query_topic: str, top_k: int = 50) -> List[int]:
         """Filter documents by topic before similarity search"""
         if query_topic == "general_law":
-            return list(range(min(top_k, len(self.knowledge_base))))
+            # For general law, include more diverse documents
+            return list(range(min(top_k * 2, len(self.knowledge_base))))
         
         filtered_indices = []
+        fallback_indices = []
+        
         for i, item in enumerate(self.knowledge_base):
             item_category = item.get("category", "")
             item_text = f"{item.get('question', '')} {item.get('answer', '')} {item.get('context', '')}"
-            item_topic, _ = self.topic_classifier.classify_query(item_text)
+            item_topic, confidence = self.topic_classifier.classify_query(item_text)
             
-            # Include if topic matches or category matches
+            # Primary matches - exact topic match
             if (item_topic == query_topic or 
-                item_category == query_topic or
-                query_topic in item_text.lower()):
+                item_category == query_topic):
                 filtered_indices.append(i)
+            # Secondary matches - partial relevance
+            elif (query_topic in item_text.lower() or 
+                  confidence > 0.2):
+                fallback_indices.append(i)
         
-        return filtered_indices[:top_k]
+        # Combine primary and fallback results
+        combined_indices = filtered_indices + fallback_indices
+        
+        # If we don't have enough results, include more general documents
+        if len(combined_indices) < top_k:
+            remaining = top_k - len(combined_indices)
+            general_indices = [i for i in range(len(self.knowledge_base)) 
+                             if i not in combined_indices][:remaining]
+            combined_indices.extend(general_indices)
+        
+        return combined_indices[:top_k]
     
     def _vector_search(self, query: str, filtered_indices: List[int], top_k: int = 10) -> List[Tuple[int, float]]:
         """Perform vector similarity search on filtered documents"""
