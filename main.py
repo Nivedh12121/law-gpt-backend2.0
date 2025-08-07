@@ -168,6 +168,127 @@ File all pending annual returns immediately and pay applicable penalties to avoi
         "sources": ["Companies Act 2013", "ROC Guidelines", "Corporate Law"]
     },
     
+    "bail procedure": {
+        "response": """**🚨 BAIL PROCEDURE UNDER CrPC - COMPLETE GUIDE**
+
+📋 **Legal Framework:** Sections 436-450, Code of Criminal Procedure, 1973
+
+## 📝 **TYPES OF BAIL:**
+
+### **1. REGULAR BAIL (Section 437 CrPC)** ⚖️
+• **When:** After arrest and during trial
+• **Who can grant:** Magistrate, Sessions Judge, High Court, Supreme Court
+• **Procedure:**
+  - File bail application with supporting documents
+  - Serve copy to prosecution
+  - Court hearing with arguments
+  - Decision based on merits
+
+### **2. ANTICIPATORY BAIL (Section 438 CrPC)** 🛡️
+• **When:** Before arrest (apprehension of arrest)
+• **Who can grant:** Sessions Judge, High Court, Supreme Court only
+• **Conditions:** Must show reasonable grounds for arrest apprehension
+
+### **3. INTERIM BAIL** ⏰
+• **When:** Temporary relief pending regular bail decision
+• **Duration:** Usually 2-4 weeks
+• **Purpose:** Prevent immediate custody
+
+## 🔍 **BAIL APPLICATION PROCEDURE:**
+
+### **STEP 1: PREPARATION** 📋
+• **Draft bail application** with proper format
+• **Attach documents:**
+  - Copy of FIR
+  - Medical certificates (if applicable)
+  - Character certificates
+  - Surety documents
+  - Property papers for bond
+
+### **STEP 2: FILING** 📄
+• **File in appropriate court** (Magistrate/Sessions/High Court)
+• **Pay court fees** as prescribed
+• **Serve copy to prosecution** within stipulated time
+• **Get hearing date** from court registry
+
+### **STEP 3: HEARING** 🏛️
+• **Prosecution arguments** against bail
+• **Defense arguments** for bail
+• **Court considers factors** for bail decision
+• **Order passed** - granted/rejected/conditions imposed
+
+## ⚖️ **FACTORS COURT CONSIDERS:**
+
+### **FOR GRANTING BAIL:** ✅
+• **Nature of offense** - Non-serious, bailable
+• **Strength of evidence** - Weak prosecution case
+• **Flight risk** - Accused has roots in community
+• **No tampering** - Won't influence witnesses
+• **Health grounds** - Medical emergency
+• **Long trial** - Case likely to take years
+
+### **AGAINST GRANTING BAIL:** ❌
+• **Serious offense** - Murder, rape, terrorism
+• **Strong evidence** - Clear case against accused
+• **Flight risk** - May abscond
+• **Witness tampering** - May influence evidence
+• **Repeat offender** - History of similar crimes
+• **Public safety** - Threat to society
+
+## 📚 **IMPORTANT SECTIONS:**
+
+• **Section 436** - Bail in non-bailable cases
+• **Section 437** - When bail may be taken in non-bailable cases
+• **Section 438** - Direction for grant of bail to person apprehending arrest
+• **Section 439** - Special powers of High Court or Court of Session regarding bail
+• **Section 440** - Amount of bond and reduction thereof
+
+## 🏛️ **LANDMARK JUDGMENTS:**
+
+• **Gurbaksh Singh Sibbia v. State of Punjab (1980)** - Anticipatory bail guidelines
+• **Sanjay Chandra v. CBI (2012)** - Economic offenses and bail
+• **Arnesh Kumar v. State of Bihar (2014)** - Arrest guidelines
+• **Satender Kumar Antil v. CBI (2022)** - Bail as rule, jail as exception
+
+## 💰 **BAIL CONDITIONS:**
+
+### **COMMON CONDITIONS:**
+• **Personal Bond** - ₹10,000 to ₹5,00,000 (varies)
+• **Surety** - One or more sureties
+• **Surrender passport** - In serious cases
+• **Regular reporting** - Police station/court
+• **No tampering** - With evidence or witnesses
+• **Residence restriction** - Stay in jurisdiction
+
+## 🚨 **WHEN BAIL IS DIFFICULT:**
+
+• **Non-bailable offenses** - Murder (302 IPC), Rape (376 IPC)
+• **NDPS cases** - Narcotic drugs offenses
+• **Economic offenses** - Large fraud cases
+• **Terror cases** - UAPA, NIA cases
+• **Repeat offenders** - Habitual criminals
+
+## ⏰ **TIME LIMITS:**
+
+• **Regular bail** - No specific time limit
+• **Anticipatory bail** - Before arrest occurs
+• **Default bail** - 60/90 days without chargesheet (Section 167)
+• **Statutory bail** - Automatic in certain conditions
+
+## 📞 **PRACTICAL TIPS:**
+
+• **Engage experienced criminal lawyer** immediately
+• **Prepare strong grounds** for bail application
+• **Arrange reliable sureties** beforehand
+• **Keep all documents** ready
+• **Follow bail conditions** strictly once granted
+
+⚠️ **REMEMBER:** "Bail is the rule, jail is the exception" - Supreme Court principle
+
+📋 **DISCLAIMER:** This is general information. Always consult a qualified criminal lawyer for specific cases and current legal position.""",
+        "sources": ["Criminal Procedure Code 1973", "Supreme Court Judgments", "Bail Jurisprudence", "Criminal Law Practice"]
+    },
+    
     "company law": {
         "response": """**Indian Company Law Overview**
 
@@ -349,9 +470,13 @@ def get_legal_response(query: str) -> Dict[str, Any]:
     if any(term in query_lower for term in ["file fir", "fir filing", "how to file", "fir process", "register fir", "lodge fir", "complaint police", "police complaint", "fir step", "file complaint"]):
         return LEGAL_RESPONSES["fir"]
     
+    # Check for bail-related queries (high priority)
+    bail_keywords = ["bail", "anticipatory bail", "custody", "arrest", "bail procedure", "crpc bail", "section 437", "section 438", "regular bail", "interim bail", "bail application", "bail conditions", "surety", "bond"]
+    if any(keyword in query_lower for keyword in bail_keywords):
+        return LEGAL_RESPONSES["bail procedure"]
+    
     # Enhanced keyword matching for better query recognition
     company_keywords = ["company", "private limited", "annual return", "filing", "roc", "director", "compliance"]
-    bail_keywords = ["bail", "anticipatory bail", "custody", "arrest"]
     constitutional_keywords = ["article", "constitution", "fundamental right"]
     criminal_keywords = ["ipc", "section", "murder", "theft", "fraud"]
     
@@ -369,34 +494,101 @@ def get_legal_response(query: str) -> Dict[str, Any]:
         else:
             return LEGAL_RESPONSES["company law"]
     
-    # General legal guidance
-    if any(term in query_lower for term in ["bail", "anticipatory bail"]):
+    # Contract law detection
+    contract_keywords = ["contract", "agreement", "breach", "contract review", "contract law", "terms and conditions", "contract dispute", "contract violation", "contract enforcement"]
+    if any(keyword in query_lower for keyword in contract_keywords):
         return {
-            "response": """**Bail Provisions in Indian Law**
+            "response": """**📋 CONTRACT LAW IN INDIA - COMPREHENSIVE GUIDE**
 
-📋 **Types of Bail:**
-• **Regular Bail** - Under Section 437 CrPC
-• **Anticipatory Bail** - Under Section 438 CrPC
-• **Interim Bail** - Temporary relief
+📚 **Legal Framework:** Indian Contract Act, 1872
 
-⚖️ **Factors for Granting Bail:**
-• Nature and gravity of accusation
-• Severity of punishment
-• Character of evidence
-• Reasonable apprehension of tampering with evidence
-• Likelihood of accused fleeing from justice
+## 🔍 **CONTRACT REVIEW ESSENTIALS:**
 
-🔍 **Constitutional Provisions:**
-• Article 21 - Right to life and personal liberty
-• Article 22 - Protection against arrest and detention
+### **KEY ELEMENTS TO REVIEW:** ✅
+• **Parties** - Clear identification of contracting parties
+• **Subject Matter** - Specific description of goods/services
+• **Consideration** - Monetary or other valuable consideration
+• **Terms & Conditions** - Rights, obligations, and responsibilities
+• **Duration** - Start date, end date, renewal clauses
+• **Termination** - Conditions for ending the contract
+• **Dispute Resolution** - Arbitration, mediation, court jurisdiction
 
-📚 **Important Judgments:**
-• **Gurbaksh Singh Sibbia v. State of Punjab** - Anticipatory bail guidelines
-• **Sanjay Chandra v. CBI** - Economic offenses and bail
+### **CRITICAL CLAUSES TO EXAMINE:** 🔍
+• **Force Majeure** - Unforeseeable circumstances clause
+• **Indemnity** - Protection against losses/damages
+• **Confidentiality** - Non-disclosure provisions
+• **Intellectual Property** - Ownership and usage rights
+• **Limitation of Liability** - Caps on damages
+• **Governing Law** - Which state/country laws apply
+• **Payment Terms** - Due dates, penalties, interest
 
-⚠️ **Note:** Bail is generally the rule, jail is the exception. Consult a criminal lawyer for specific cases.""",
-            "sources": ["Criminal Procedure Code", "Supreme Court Cases", "Bail Jurisprudence"]
+## ⚖️ **TYPES OF CONTRACTS:**
+
+• **Sale of Goods** - Transfer of ownership
+• **Service Agreements** - Provision of services
+• **Employment Contracts** - Employer-employee relationship
+• **Partnership Agreements** - Business partnerships
+• **Lease Agreements** - Property rental
+• **Non-Disclosure Agreements** - Confidentiality protection
+
+## 🚨 **RED FLAGS IN CONTRACTS:**
+
+• **Vague Terms** - Unclear obligations or deliverables
+• **Unfair Penalties** - Excessive penalty clauses
+• **One-sided Terms** - Heavily favoring one party
+• **Missing Clauses** - No termination or dispute resolution
+• **Unrealistic Deadlines** - Impossible performance timelines
+• **Unlimited Liability** - No caps on damages
+
+## 📋 **CONTRACT REVIEW CHECKLIST:**
+
+### **BEFORE SIGNING:** ✅
+• Read entire contract thoroughly
+• Understand all terms and conditions
+• Check for hidden fees or charges
+• Verify party details and signatures
+• Ensure compliance with applicable laws
+• Get legal advice for complex contracts
+
+### **KEY QUESTIONS TO ASK:** ❓
+• What are my exact obligations?
+• What happens if I can't perform?
+• How can the contract be terminated?
+• What are the penalty clauses?
+• Who bears the risk of non-performance?
+• Is there a cooling-off period?
+
+## ⚖️ **BREACH OF CONTRACT:**
+
+### **TYPES OF BREACH:**
+• **Minor Breach** - Partial non-performance
+• **Material Breach** - Substantial failure to perform
+• **Anticipatory Breach** - Indication of future non-performance
+
+### **REMEDIES AVAILABLE:**
+• **Damages** - Monetary compensation
+• **Specific Performance** - Court order to perform
+• **Injunction** - Court order to stop/start action
+• **Rescission** - Cancel the contract
+• **Restitution** - Return to original position
+
+## 📞 **PROFESSIONAL ADVICE:**
+
+• **Simple Contracts** - Basic review possible
+• **Complex Agreements** - Always consult lawyer
+• **High-Value Contracts** - Mandatory legal review
+• **International Contracts** - Specialized legal advice
+
+⚠️ **IMPORTANT:** This is general guidance. Always consult a qualified contract lawyer for specific contract review and legal advice.
+
+📋 **DISCLAIMER:** Contract law can be complex and fact-specific. Professional legal advice is recommended for all significant contracts.""",
+            "sources": ["Indian Contract Act 1872", "Contract Law Practice", "Commercial Law", "Legal Precedents"]
         }
+    
+    # Constitutional law detection
+    if any(keyword in query_lower for keyword in constitutional_keywords):
+        # This will be handled by specific article matching below
+        pass
     
     # Default response for unrecognized queries
     return {
