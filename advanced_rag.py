@@ -95,6 +95,14 @@ class TopicClassifier:
                 ],
                 "acts": ["transfer of property act 1882", "registration act 1908"],
                 "sections": ["54", "58", "105", "107", "17", "18"]
+            },
+            "intellectual_property": {
+                "keywords": [
+                    "copyright", "trademark", "patent", "design", "geographical indication",
+                    "ipr", "intellectual property rights", "infringement", "passing off"
+                ],
+                "acts": ["the copyright act 1957", "the trademarks act 1999", "the patents act 1970"],
+                "sections": ["13", "14", "17", "51", "2", "9", "11", "28", "29", "3", "48"]
             }
         }
     

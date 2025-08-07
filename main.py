@@ -459,6 +459,29 @@ Consult a Company Secretary or Chartered Accountant for proper compliance manage
 
 📚 **Legal Provisions:** Sections 154, 155, 156, 157, 161 of CrPC, 1973""",
         "sources": ["Code of Criminal Procedure 1973", "Police Manual", "Supreme Court Guidelines", "Legal Aid Handbook"]
+    },
+    "intellectual_property": {
+        "response": """**Intellectual Property Law in India**
+
+📋 **Primary Legislation:**
+• The Copyright Act, 1957
+• The Trademarks Act, 1999
+• The Patents Act, 1970
+• The Designs Act, 2000
+
+⚖️ **Key Concepts:**
+• **Copyright:** Protects original literary, dramatic, musical, and artistic works.
+• **Trademark:** Protects brand names, logos, and slogans.
+• **Patent:** Protects new and useful inventions.
+• **Design:** Protects the ornamental or aesthetic aspect of an article.
+
+🚨 **Common Issues:**
+• **Infringement:** Unauthorized use of protected intellectual property.
+• **Passing Off:** Misrepresenting goods or services as those of another.
+
+⚠️ **Professional Advice:**
+Always consult an Intellectual Property lawyer for specific advice on protecting and enforcing your IP rights.""",
+        "sources": ["The Copyright Act 1957", "The Trademarks Act 1999", "The Patents Act 1970"]
     }
 }
 
