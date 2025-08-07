@@ -1289,15 +1289,6 @@ def generate_company_law_response(query: str) -> str:
 🛑 **Legal Disclaimer**: 
 This information is for educational purposes only. Consult a qualified company law advocate for specific corporate matters."""
 
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "pipeline_status": "operational",
-        "knowledge_base_loaded": len(KNOWLEDGE_BASE) > 0,
-        "version": "10.0.0"
-    }
-
 @app.get("/languages")
 async def get_language_support():
     return {
