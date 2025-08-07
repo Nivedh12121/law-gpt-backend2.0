@@ -26,9 +26,15 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_origins=[
+        "*",  # Allow all origins for development
+        "https://law-gpt-professional.web.app",  # Your Firebase hosting domain
+        "https://law-gpt-professional.firebaseapp.com",  # Alternative Firebase domain
+        "http://localhost:3000",  # Local development
+        "http://localhost:3001",  # Alternative local port
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -432,6 +438,11 @@ async def health_check():
         "status": "healthy",
         "version": "2.0.0"
     }
+
+@app.options("/chat")
+async def chat_options():
+    """Handle CORS preflight requests for chat endpoint"""
+    return {"message": "OK"}
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
