@@ -130,6 +130,41 @@ KNOWLEDGE_BASE = load_all_json_data(DATA_DIRECTORY)
 rag_pipeline = AdvancedRAGPipeline(KNOWLEDGE_BASE, GEMINI_API_KEY)
 logger.info(f"Knowledge base ready with {len(KNOWLEDGE_BASE)} records (remote enabled={KANOON_ENABLE_REMOTE})")
 
+# ---- Minimal Observability Helpers ----
+def _top_sources(sources: List[Dict[str, Any]], k: int = 3) -> List[str]:
+    names: List[str] = []
+    for s in (sources or [])[:k]:
+        src = None
+        if isinstance(s, dict):
+            src = s.get("source") or (s.get("meta") or {}).get("source") or s.get("file") or s.get("name")
+        src = src or "-"
+        if isinstance(src, str) and ("/" in src or "\\" in src):
+            src = src.replace("\\", "/").split("/")[-1]
+        names.append(str(src))
+    return names
+
+def _act_sections(meta: Dict[str, Any]) -> Dict[str, Any]:
+    try:
+        if not isinstance(meta, dict):
+            return {"act": None, "sections": None}
+        act = meta.get("act")
+        sections = meta.get("sections")
+        if isinstance(sections, (list, tuple)):
+            sections = [str(x) for x in sections[:5]]
+        elif sections is not None:
+            sections = [str(sections)]
+        return {"act": act, "sections": sections}
+    except Exception:
+        return {"act": None, "sections": None}
+
+def _validate_schema(result: Dict[str, Any]) -> None:
+    if not isinstance(result, dict):
+        raise HTTPException(status_code=500, detail="invalid_result_type")
+    if "answer" not in result:
+        raise HTTPException(status_code=500, detail="missing_answer")
+    if "sources" in result and not isinstance(result["sources"], list):
+        raise HTTPException(status_code=500, detail="invalid_sources_type")
+
 # Pydantic models
 class ChatRequest(BaseModel):
     query: str
