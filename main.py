@@ -8,6 +8,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+# Integrate Advanced RAG
+from advanced_rag import AdvancedRAGPipeline
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,38 +19,116 @@ logger = logging.getLogger(__name__)
 DATA_DIRECTORY = "data"
 CORS_ORIGINS = ["*"]
 
+# Remote dataset configuration (GitHub folder with Kanoon cleaned JSON)
+KANOON_REMOTE_REPO = "Nivedh12121/law-gpt-backend2.0"
+KANOON_REMOTE_PATH = "Kanoon data cleande"
+KANOON_BRANCH = os.getenv("KANOON_BRANCH", "main")
+KANOON_ENABLE_REMOTE = os.getenv("KANOON_ENABLE_REMOTE", "1") == "1"
+KANOON_CACHE_DIR = os.path.join(os.path.dirname(__file__), "data", "_remote_cache")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyDGlQJJhJJhJJhJJhJJhJJhJJhJJhJJhJJ")
+
+def _safe_extend_json(records: List[Dict[str, Any]], payload: Any, source_hint: str = "") -> int:
+    """Append JSON payload to records, handling list/dict and tagging source."""
+    added = 0
+    try:
+        if isinstance(payload, list):
+            for item in payload:
+                if isinstance(item, dict):
+                    if source_hint and "source" not in item:
+                        item["source"] = source_hint
+                    records.append(item)
+                    added += 1
+        elif isinstance(payload, dict):
+            item = payload
+            if source_hint and "source" not in item:
+                item["source"] = source_hint
+            records.append(item)
+            added += 1
+    except Exception as e:
+        logger.error(f"Failed to extend records from {source_hint}: {e}")
+    return added
+
+def _ensure_dir(path: str):
+    os.makedirs(path, exist_ok=True)
+
+def _load_json_file(path: str) -> Any:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
 def load_all_json_data(data_dir: str) -> List[Dict[str, Any]]:
-    all_data = []
-    data_dir_path = os.path.join(os.path.dirname(__file__), data_dir)
-    if not os.path.exists(data_dir_path):
-        logger.warning(f"Data directory {data_dir_path} does not exist")
-        return []
-    for filename in os.listdir(data_dir_path):
-        if filename.endswith(".json"):
-            filepath = os.path.join(data_dir_path, filename)
-            try:
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    if isinstance(data, list):
-                        all_data.extend(data)
-                    elif isinstance(data, dict):
-                        all_data.append(data)
-            except Exception as e:
-                logger.error(f"Error reading {filename}: {e}")
-    logger.info(f"Loaded {len(all_data)} records from {data_dir}")
+    all_data: List[Dict[str, Any]] = []
+    base_dir = os.path.join(os.path.dirname(__file__), data_dir)
+    if not os.path.exists(base_dir):
+        logger.warning(f"Data directory {base_dir} does not exist")
+    else:
+        # Load local JSON (including subfolders)
+        for root, _, files in os.walk(base_dir):
+            for filename in files:
+                if not filename.lower().endswith(".json"):
+                    continue
+                filepath = os.path.join(root, filename)
+                try:
+                    payload = _load_json_file(filepath)
+                    added = _safe_extend_json(all_data, payload, source_hint=os.path.relpath(filepath, base_dir))
+                    logger.debug(f"Loaded {added} items from {filepath}")
+                except Exception as e:
+                    logger.error(f"Error reading {filepath}: {e}")
+
+    # Optionally load remote GitHub JSON files from Kanoon path
+    if KANOON_ENABLE_REMOTE:
+        try:
+            import requests
+            # Use GitHub API to list contents of the folder (supports spaces via URL encoding)
+            api_url = f"https://api.github.com/repos/{KANOON_REMOTE_REPO}/contents/{requests.utils.requote_uri(KANOON_REMOTE_PATH)}?ref={KANOON_BRANCH}"
+            logger.info(f"Fetching remote dataset index: {api_url}")
+            r = requests.get(api_url, timeout=30)
+            r.raise_for_status()
+            listing = r.json()
+            if isinstance(listing, list):
+                _ensure_dir(KANOON_CACHE_DIR)
+                for entry in listing:
+                    if entry.get("type") != "file":
+                        continue
+                    name = entry.get("name", "")
+                    if not name.lower().endswith(".json"):
+                        continue
+                    download_url = entry.get("download_url")
+                    if not download_url:
+                        # Fallback to raw URL
+                        download_url = f"https://raw.githubusercontent.com/{KANOON_REMOTE_REPO}/{KANOON_BRANCH}/{KANOON_REMOTE_PATH}/{name}"
+                    cache_path = os.path.join(KANOON_CACHE_DIR, name)
+                    try:
+                        logger.info(f"Downloading remote dataset file: {name}")
+                        rr = requests.get(download_url, timeout=60)
+                        rr.raise_for_status()
+                        with open(cache_path, "wb") as out:
+                            out.write(rr.content)
+                        payload = _load_json_file(cache_path)
+                        added = _safe_extend_json(all_data, payload, source_hint=f"remote:{name}")
+                        logger.info(f"Loaded {added} items from remote {name}")
+                    except Exception as e:
+                        logger.error(f"Failed remote fetch {name}: {e}")
+            else:
+                logger.warning("Remote listing did not return a file array; skipping remote load.")
+        except Exception as e:
+            logger.error(f"Remote dataset load failed: {e}")
+
+    logger.info(f"Total knowledge records loaded: {len(all_data)}")
     return all_data
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Law GPT API - Advanced Legal AI v10.0",
+    title="Law GPT API - Advanced Legal AI",
     description="Next-generation AI-powered Indian legal assistant",
-    version="10.0.0"
+    version="12.0.0"
 )
 
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
 
-# Load knowledge base
+# Load knowledge base and initialize Advanced RAG pipeline
 KNOWLEDGE_BASE = load_all_json_data(DATA_DIRECTORY)
+rag_pipeline = AdvancedRAGPipeline(KNOWLEDGE_BASE, GEMINI_API_KEY)
+logger.info(f"Knowledge base ready with {len(KNOWLEDGE_BASE)} records (remote enabled={KANOON_ENABLE_REMOTE})")
 
 # Pydantic models
 class ChatRequest(BaseModel):
@@ -66,107 +147,53 @@ class ChatResponse(BaseModel):
 
 @app.get("/")
 async def root():
+    """Public root status with explicit versioning and AI status."""
     return {
-        "message": "⚖️ Law GPT Professional API v10.0 - Next-Generation Legal AI!",
-        "features": [
-            "🧠 Chain-of-Thought Legal Reasoning",
-            "🔍 Source Transparency & Verification", 
-            "🌐 Multilingual Support (12 Indian Languages)",
-            "🎭 Legal Scenario Simulation",
-            "📊 Advanced Document Retrieval"
-        ],
+        "message": "⚡ Law GPT Enhanced API is running!",
+        "status": "healthy",
+        "version": "12.0.0",
+        "ai_status": "enabled" if GEMINI_API_KEY and GEMINI_API_KEY != "AIzaSyDGlQJJhJJhJJhJJhJJhJJhJJhJJhJJhJJ" else "template_mode",
         "knowledge_base_size": len(KNOWLEDGE_BASE),
-        "pipeline_version": "10.0.0",
-        "status": "operational"
+        "remote_sources": {
+            "kanoon_repo": KANOON_REMOTE_REPO,
+            "kanoon_path": KANOON_REMOTE_PATH,
+            "kanoon_branch": KANOON_BRANCH,
+            "remote_enabled": KANOON_ENABLE_REMOTE
+        }
+    }
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "ai_model_status": "enabled" if GEMINI_API_KEY and GEMINI_API_KEY != "AIzaSyDGlQJJhJJhJJhJJhJJhJJhJJhJJhJJhJJ" else "template_mode",
+        "knowledge_base_size": len(KNOWLEDGE_BASE),
+        "timestamp": datetime.now().isoformat()
     }
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     start_time = datetime.now()
-    
     try:
         query = request.query.strip()
         if not query:
             raise HTTPException(status_code=400, detail="Query cannot be empty")
-        
+
         session_id = request.session_id or str(uuid.uuid4())
-        
-        # Determine topic
-        query_lower = query.lower()
-        if any(term in query_lower for term in ["contract", "agreement", "void", "voidable"]):
-            topic = "contract_law"
-        elif any(term in query_lower for term in ["bail", "fir", "criminal", "ipc", "mens rea", "actus reus", "murder", "culpable", "defamation"]):
-            topic = "criminal_law"
-        elif any(term in query_lower for term in ["company", "director", "roc"]):
-            topic = "company_law"
-        else:
-            topic = "general_law"
-        
-        # Generate response based on query - Enhanced matching logic
-        if "void" in query_lower and "voidable" in query_lower:
-            response = generate_void_voidable_response()
-            confidence = 0.95
-        elif "essential elements" in query_lower and "contract" in query_lower:
-            response = generate_contract_elements_response()
-            confidence = 0.90
-        elif ("mens rea" in query_lower and "actus reus" in query_lower) or ("mens rea" in query_lower or "actus reus" in query_lower):
-            response = generate_mens_rea_actus_reus_response()
-            confidence = 0.95
-        elif "bail" in query_lower:
-            response = generate_bail_response()
-            confidence = 0.85
-        elif "section 138" in query_lower or "cheque bounce" in query_lower:
-            response = generate_section_138_response()
-            confidence = 0.90
-        elif any(term in query_lower for term in ["फीस", "फी", "पैसा", "रुपया", "रुपये"]) and any(term in query_lower for term in ["fir", "दर्ज", "रिपोर्ट"]):
-            # Hindi query about FIR fees
-            response = generate_fir_fees_response()
-            confidence = 0.90
-        elif any(term in query_lower for term in ["fir", "दर्ज", "रिपोर्ट", "शिकायत"]):
-            # Hindi FIR queries
-            response = generate_fir_process_response()
-            confidence = 0.85
-        elif "fir" in query_lower:  # Generic FIR matching - any mention of FIR
-            response = generate_fir_process_response()
-            confidence = 0.85
-        elif any(term in query_lower for term in ["divorce", "marriage", "matrimonial", "custody", "alimony"]):
-            response = generate_family_law_response()
-            confidence = 0.85
-        elif any(term in query_lower for term in ["consumer", "consumer protection", "consumer court", "defective product"]):
-            response = generate_consumer_law_response()
-            confidence = 0.85
-        elif any(term in query_lower for term in ["property", "real estate", "land", "registration", "stamp duty"]):
-            response = generate_property_law_response()
-            confidence = 0.85
-        elif any(term in query_lower for term in ["labour", "labor", "employment", "salary", "wages", "pf", "esi"]):
-            response = generate_labour_law_response()
-            confidence = 0.85
-        elif any(term in query_lower for term in ["ipc", "section 302", "section 375", "section 420", "murder", "rape", "fraud"]):
-            response = generate_ipc_response(query_lower)
-            confidence = 0.90
-        elif topic == "contract_law":
-            response = generate_contract_law_response(query)
-            confidence = 0.80
-        elif topic == "criminal_law":
-            response = generate_criminal_law_response(query)
-            confidence = 0.80
-        elif topic == "company_law":
-            response = generate_company_law_response(query)
-            confidence = 0.80
-        else:
-            response = generate_enhanced_general_response(query, topic)
-            confidence = 0.75
-        
+
+        # Route through Advanced RAG pipeline
+        result = await rag_pipeline.process_query(query, session_id)
+
         processing_time = (datetime.now() - start_time).total_seconds()
-        
+
         return ChatResponse(
-            response=response,
-            confidence=confidence,
-            topic=topic,
+            response=result.get("response", ""),
+            confidence=float(result.get("confidence", 0.0)),
+            topic=result.get("topic", "general_law"),
             session_id=session_id,
             processing_time=processing_time
         )
-        
+
     except Exception as e:
         logger.error(f"Chat endpoint error: {e}")
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
