@@ -228,7 +228,7 @@ class UltraFastLegalRAG:
         hindi_ratio = hindi_chars / total_chars
         return 'hi' if hindi_ratio > 0.3 else 'en'
     
-    def _detect_procedural_query(self, query: str) -> tuple[bool, str]:
+    def _detect_procedural_query(self, query: str) -> tuple:
         """Detect if query is asking for a legal procedure and identify the procedure type"""
         query_lower = query.lower()
         
@@ -343,9 +343,11 @@ This provides general procedural guidance. For case-specific advice and represen
         
         # Check if this is a procedural query first
         is_procedural, procedure_type = self._detect_procedural_query(query)
+        logger.info(f"Procedural query check: {is_procedural}, type: {procedure_type}")
         
         if is_procedural and procedure_type:
             # Generate procedural response
+            logger.info(f"Generating procedural response for: {procedure_type}")
             response = self._get_procedural_response(procedure_type, query)
             confidence = 0.95  # High confidence for procedural responses
             topic = "procedural_law"
