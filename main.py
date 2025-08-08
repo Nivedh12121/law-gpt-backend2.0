@@ -798,6 +798,22 @@ async def get_stats():
         ]
     }
 
+@app.get("/debug")
+async def debug_ai_status():
+    """Debug AI status and configuration"""
+    if not rag_pipeline:
+        return {"error": "RAG pipeline not initialized"}
+    
+    return {
+        "ai_enabled": rag_pipeline.ai_enabled,
+        "api_key_configured": bool(rag_pipeline.api_key and len(rag_pipeline.api_key) > 10),
+        "api_key_preview": rag_pipeline.api_key[:10] + "..." if rag_pipeline.api_key else "None",
+        "gemini_api_key_env": bool(os.getenv("GEMINI_API_KEY")),
+        "env_key_preview": os.getenv("GEMINI_API_KEY", "")[:10] + "..." if os.getenv("GEMINI_API_KEY") else "None",
+        "legal_domains": len(rag_pipeline.legal_knowledge),
+        "system_status": "operational"
+    }
+
 @app.get("/legal-domains")
 async def get_legal_domains():
     """Get available legal domains"""
