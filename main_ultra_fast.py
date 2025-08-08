@@ -382,13 +382,16 @@ This provides general procedural guidance. For case-specific advice and represen
             # Generate response
             if self.ai_enabled:
                 try:
+                    logger.info(f"Generating AI response for query type: {self._identify_query_type(query)}")
                     response = await self._generate_expert_legal_response(query, topic, legal_context, detected_language)
                     confidence = min(topic_confidence + 0.2, 0.95)
+                    logger.info("AI response generated successfully")
                 except Exception as e:
                     logger.error(f"AI response generation failed: {e}")
                     response = self._generate_structured_legal_response(query, topic, legal_context)
                     confidence = topic_confidence
             else:
+                logger.info("AI disabled, using structured response")
                 response = self._generate_structured_legal_response(query, topic, legal_context)
                 confidence = topic_confidence
         
