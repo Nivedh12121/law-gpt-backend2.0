@@ -228,6 +228,112 @@ class UltraFastLegalRAG:
         hindi_ratio = hindi_chars / total_chars
         return 'hi' if hindi_ratio > 0.3 else 'en'
     
+    def _detect_procedural_query(self, query: str) -> tuple[bool, str]:
+        """Detect if query is asking for a legal procedure and identify the procedure type"""
+        query_lower = query.lower()
+        
+        # Common procedural patterns
+        procedural_patterns = {
+            "file_fir": ["how to file fir", "file fir", "register fir", "fir kaise file", "fir registration", "complaint police"],
+            "get_bail": ["how to get bail", "bail application", "bail procedure", "जमानत कैसे", "bail kaise"],
+            "file_divorce": ["how to file divorce", "divorce procedure", "divorce application", "तलाक कैसे"],
+            "register_marriage": ["marriage registration", "register marriage", "marriage certificate", "विवाह पंजीकरण"],
+            "property_registration": ["property registration", "register property", "property deed", "संपत्ति पंजीकरण"],
+            "consumer_complaint": ["consumer complaint", "consumer court", "consumer forum", "उपभोक्ता शिकायत"]
+        }
+        
+        for procedure_type, patterns in procedural_patterns.items():
+            if any(pattern in query_lower for pattern in patterns):
+                return True, procedure_type
+        
+        return False, ""
+    
+    def _get_procedural_response(self, procedure_type: str, query: str) -> str:
+        """Generate step-by-step procedural response"""
+        procedures = {
+            "file_fir": {
+                "title": "How to File an FIR (First Information Report)",
+                "applicable_law": "Section 154, Code of Criminal Procedure, 1973 (CrPC)",
+                "steps": [
+                    "Go to the nearest police station within whose jurisdiction the offense occurred",
+                    "Approach the officer-in-charge or duty officer at the police station",
+                    "Give information about the cognizable offense either orally or in writing",
+                    "If given orally, police must write it down and read it back to you for confirmation",
+                    "Sign the written statement after verifying its accuracy",
+                    "Obtain a free copy of the registered FIR with the FIR number",
+                    "If police refuse to register FIR, file complaint with Superintendent of Police under Section 154(3) CrPC",
+                    "Alternatively, approach the Magistrate directly under Section 156(3) CrPC"
+                ],
+                "important_points": [
+                    "FIR registration is mandatory for cognizable offenses",
+                    "Police cannot refuse to register FIR if cognizable offense is disclosed",
+                    "FIR copy must be provided free of cost",
+                    "Note down FIR number for future reference and tracking"
+                ],
+                "case_law": "Lalita Kumari v. Government of Uttar Pradesh (2014) - Police must register FIR if cognizable offense is disclosed",
+                "sources": ["Code of Criminal Procedure, 1973", "Lalita Kumari v. Government of U.P., (2014) 2 SCC 1"]
+            },
+            "get_bail": {
+                "title": "How to Apply for Bail",
+                "applicable_law": "Sections 436-450, Code of Criminal Procedure, 1973",
+                "steps": [
+                    "Determine if the offense is bailable or non-bailable",
+                    "For bailable offenses: Apply directly to police station or court",
+                    "For non-bailable offenses: File bail application in appropriate court",
+                    "Prepare bail application with grounds and supporting documents",
+                    "Submit application through advocate or in person",
+                    "Attend court hearing and present arguments",
+                    "If granted, execute bail bond with sureties as directed by court"
+                ],
+                "important_points": [
+                    "Bail is a right for bailable offenses",
+                    "For non-bailable offenses, bail is at court's discretion",
+                    "Factors considered: nature of offense, evidence, flight risk, previous record"
+                ],
+                "case_law": "Gurcharan Singh v. State (1978) - Bail is rule, jail is exception",
+                "sources": ["Code of Criminal Procedure, 1973", "Constitution of India - Article 21"]
+            }
+        }
+        
+        if procedure_type not in procedures:
+            return ""
+        
+        proc = procedures[procedure_type]
+        
+        response = f"""**🏛️ LEGAL PROCEDURE GUIDE - {proc['title']}**
+
+**📋 Legal Query:** {query}
+
+**⚖️ Applicable Legal Framework:**
+• {proc['applicable_law']}
+• {proc.get('case_law', '')}
+
+**📝 Step-by-Step Procedure:**
+"""
+        
+        for i, step in enumerate(proc['steps'], 1):
+            response += f"{i}. {step}\n"
+        
+        response += f"""
+**💡 Important Points:**
+"""
+        for point in proc['important_points']:
+            response += f"• {point}\n"
+        
+        response += f"""
+**📚 Legal Authority:**
+• {proc.get('case_law', 'Statutory provisions and established legal precedents')}
+
+**📜 Sources:**
+{', '.join(proc.get('sources', ['Relevant legal statutes']))}
+
+**⚠️ Legal Disclaimer:**
+This provides general procedural guidance. For case-specific advice and representation, consult a qualified legal practitioner.
+
+**🎯 Confidence Level:** High (based on statutory provisions and established procedures)"""
+        
+        return response
+    
     async def process_query(self, query: str, session_id: str = None, language: str = None) -> Dict[str, Any]:
         """Ultra-fast query processing with legal expertise"""
         start_time = datetime.now()
@@ -235,30 +341,47 @@ class UltraFastLegalRAG:
         # Language detection
         detected_language = language or self._detect_language(query)
         
-        # Topic classification with legal reasoning
-        topic, topic_confidence = self.classify_query_topic(query)
+        # Check if this is a procedural query first
+        is_procedural, procedure_type = self._detect_procedural_query(query)
         
-        # Get relevant legal context
-        legal_context = self.get_relevant_legal_context(query, topic)
-        
-        # Generate response
-        if self.ai_enabled:
-            try:
-                response = await self._generate_expert_legal_response(query, topic, legal_context, detected_language)
-                confidence = min(topic_confidence + 0.2, 0.95)
-            except Exception as e:
-                logger.error(f"AI response generation failed: {e}")
+        if is_procedural and procedure_type:
+            # Generate procedural response
+            response = self._get_procedural_response(procedure_type, query)
+            confidence = 0.95  # High confidence for procedural responses
+            topic = "procedural_law"
+        else:
+            # Topic classification with legal reasoning
+            topic, topic_confidence = self.classify_query_topic(query)
+            
+            # Get relevant legal context
+            legal_context = self.get_relevant_legal_context(query, topic)
+            
+            # Generate response
+            if self.ai_enabled:
+                try:
+                    response = await self._generate_expert_legal_response(query, topic, legal_context, detected_language)
+                    confidence = min(topic_confidence + 0.2, 0.95)
+                except Exception as e:
+                    logger.error(f"AI response generation failed: {e}")
+                    response = self._generate_structured_legal_response(query, topic, legal_context)
+                    confidence = topic_confidence
+            else:
                 response = self._generate_structured_legal_response(query, topic, legal_context)
                 confidence = topic_confidence
-        else:
-            response = self._generate_structured_legal_response(query, topic, legal_context)
-            confidence = topic_confidence
         
         processing_time = (datetime.now() - start_time).total_seconds()
         
         # Extract sources
         sources = []
-        if topic in self.legal_knowledge:
+        if topic == "procedural_law":
+            # Sources are already included in procedural responses
+            if "fir" in query.lower():
+                sources = ["Code of Criminal Procedure, 1973", "Lalita Kumari v. Government of U.P., (2014) 2 SCC 1"]
+            elif "bail" in query.lower():
+                sources = ["Code of Criminal Procedure, 1973", "Constitution of India - Article 21"]
+            else:
+                sources = ["Procedural Law provisions"]
+        elif topic in self.legal_knowledge:
             if "ipc" in query.lower() or "indian penal code" in query.lower():
                 sources.append("Indian Penal Code, 1860")
             if "constitution" in query.lower() or "article" in query.lower():
@@ -283,7 +406,33 @@ class UltraFastLegalRAG:
         """Generate expert legal response using Gemini with LegalBERT concepts"""
         
         # Enhanced prompt with legal expertise and LegalBERT reasoning
-        prompt = f"""You are an expert Indian legal AI assistant with comprehensive knowledge of Indian law, legal precedents, and judicial reasoning. You understand advanced legal concepts including mens rea, actus reus, ratio decidendi, obiter dicta, and stare decisis.
+        # Check if this is a procedural query that needs step-by-step guidance
+        is_how_to_query = any(phrase in query.lower() for phrase in ["how to", "procedure", "process", "steps", "kaise", "कैसे"])
+        
+        if is_how_to_query:
+            prompt = f"""You are an expert Indian legal AI assistant specializing in legal procedures and practical guidance. 
+
+LEGAL QUERY: {query}
+LEGAL DOMAIN: {topic.replace('_', ' ').title()}
+RESPONSE LANGUAGE: {language}
+
+RELEVANT LEGAL CONTEXT:
+{context}
+
+PROCEDURAL RESPONSE INSTRUCTIONS:
+1. Identify the specific legal procedure being asked about
+2. Provide clear, step-by-step instructions in numbered format
+3. Include applicable statutory provisions and sections
+4. Mention relevant case law and legal precedents
+5. Add important points and practical tips
+6. Include required documents, fees, and timelines where applicable
+7. Provide alternative options if the primary procedure fails
+8. Use simple, actionable language while maintaining legal accuracy
+9. Structure: Procedure Title → Applicable Law → Step-by-Step Process → Important Points → Legal Authority
+
+STEP-BY-STEP LEGAL PROCEDURE RESPONSE:"""
+        else:
+            prompt = f"""You are an expert Indian legal AI assistant with comprehensive knowledge of Indian law, legal precedents, and judicial reasoning. You understand advanced legal concepts including mens rea, actus reus, ratio decidendi, obiter dicta, and stare decisis.
 
 LEGAL QUERY: {query}
 LEGAL DOMAIN: {topic.replace('_', ' ').title()}
