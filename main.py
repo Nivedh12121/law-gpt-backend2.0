@@ -814,6 +814,29 @@ async def debug_ai_status():
         "system_status": "operational"
     }
 
+@app.get("/test-ai")
+async def test_ai_directly():
+    """Test AI generation directly"""
+    if not rag_pipeline or not rag_pipeline.ai_enabled:
+        return {"error": "AI not enabled"}
+    
+    try:
+        # Simple test prompt
+        model = genai.GenerativeModel('gemini-pro')
+        response = model.generate_content("What is the capital of India? Answer in one word.")
+        
+        return {
+            "ai_test_status": "success",
+            "response": response.text if response else "No response",
+            "response_length": len(response.text) if response and response.text else 0
+        }
+    except Exception as e:
+        return {
+            "ai_test_status": "failed",
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
+
 @app.get("/legal-domains")
 async def get_legal_domains():
     """Get available legal domains"""
