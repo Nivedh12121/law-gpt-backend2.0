@@ -624,7 +624,7 @@ GENERATE RESPONSE:"""
 
         try:
             logger.info(f"🤖 Generating AI response using Chain-of-Thought for query type: {query_type}")
-            model = genai.GenerativeModel('gemini-pro')
+            model = genai.GenerativeModel('gemini-1.5-flash')
             response = model.generate_content(prompt)
             
             if not response or not response.text:
@@ -822,7 +822,7 @@ async def test_ai_directly():
     
     try:
         # Simple test prompt
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content("What is the capital of India? Answer in one word.")
         
         return {
