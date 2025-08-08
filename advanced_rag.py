@@ -16,6 +16,7 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import google.generativeai as genai
+from googletrans import LANGUAGES # Import LANGUAGES from googletrans
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -185,7 +186,6 @@ class TopicClassifier:
                         last_conf > 0.3)
         
         return topic_changed, current_topic, last_topic
-
 class AdvancedRetriever:
     """Multi-stage retrieval with topic filtering and reranking"""
     
@@ -261,14 +261,14 @@ class AdvancedRetriever:
             # Calculate similarities only for filtered documents
             similarities = []
             for idx in filtered_indices:
-                if idx < self.doc_vectors.shape[0]:
+                if idx < self.doc_vectors.shape:
                     doc_vector = self.doc_vectors[idx:idx+1]
                     sim_matrix = cosine_similarity(query_vector, doc_vector)
-                    sim_score = float(sim_matrix[0, 0])
+                    sim_score = float(sim_matrix)
                     similarities.append((idx, sim_score))
             
             # Sort by similarity and return top results
-            similarities.sort(key=lambda x: x[1], reverse=True)
+            similarities.sort(key=lambda x: x, reverse=True)
             return similarities[:top_k]
             
         except Exception as e:
@@ -327,19 +327,29 @@ class AdvancedRetriever:
         results.sort(key=lambda x: x.score, reverse=True)
         return results
     
-    def retrieve(self, query: str, query_topic: str, top_k: int = 5) -> List[RetrievalResult]:
-        """Main retrieval method with multi-stage pipeline"""
-        logger.info(f"Retrieving for query: '{query}' in topic: '{query_topic}'")
+    def retrieve(self, query: str, query_topic: str, top_k: int = 5, is_translated_query: bool = False) -> List[RetrievalResult]:
+        """Main retrieval method with multi-stage pipeline, adjusted for translated queries"""
+        logger.info(f"Retrieving for query: '{query}' in topic: '{query_topic}' (Translated: {is_translated_query})")
+        
+        # Adjust top_k for translated queries to provide more context
+        effective_top_k_filter = 50 if is_translated_query else 30
+        effective_top_k_vector_search = 20 if is_translated_query else 10
+        effective_top_k_final = 7 if is_translated_query else top_k # Return slightly more for translated queries
         
         # Stage 1: Topic-based filtering
-        filtered_indices = self._topic_filter(query_topic, top_k=30)
-        logger.info(f"Stage 1: Filtered to {len(filtered_indices)} documents")
+        # For translated queries, make topic filtering less restrictive
+        if is_translated_query:
+            filtered_indices = self._topic_filter(query_topic, top_k=effective_top_k_filter * 2) # Double the filter pool
+            logger.info(f"Stage 1: Filtered to {len(filtered_indices)} documents (Translated Query - less restrictive)")
+        else:
+            filtered_indices = self._topic_filter(query_topic, top_k=effective_top_k_filter)
+            logger.info(f"Stage 1: Filtered to {len(filtered_indices)} documents")
         
         if not filtered_indices:
             return []
         
         # Stage 2: Vector similarity search
-        vector_results = self._vector_search(query, filtered_indices, top_k=10)
+        vector_results = self._vector_search(query, filtered_indices, top_k=effective_top_k_vector_search)
         logger.info(f"Stage 2: Vector search returned {len(vector_results)} candidates")
         
         if not vector_results:
@@ -349,8 +359,7 @@ class AdvancedRetriever:
         final_results = self._rerank_results(query, vector_results)
         logger.info(f"Stage 3: Reranked to {len(final_results)} final results")
         
-        return final_results[:top_k]
-
+        return final_results[:effective_top_k_final]
 class ConversationManager:
     """Manages conversation context and memory"""
     
@@ -411,7 +420,6 @@ class ConversationManager:
         if context.last_query and context.last_response:
             return f"Previous Q: {context.last_query}\nPrevious A: {context.last_response[:200]}..."
         return ""
-
 class AdvancedRAGPipeline:
     """Complete RAG pipeline with topic-switch safety"""
     
@@ -426,12 +434,12 @@ class AdvancedRAGPipeline:
             genai.configure(api_key=gemini_api_key)
             self.gemini_model = genai.GenerativeModel('gemini-pro')
     
-    async def process_query(self, query: str, session_id: str = "default") -> Dict[str, Any]:
+    async def process_query(self, query: str, session_id: str = "default", detected_language: str = "en") -> Dict[str, Any]:
         """Main query processing method"""
         try:
             # Step 1: Topic classification
             query_topic, topic_confidence = self.topic_classifier.classify_query(query)
-            logger.info(f"Classified query as {query_topic} with confidence {topic_confidence:.2f}")
+            logger.info(f"Classified query as {query_topic} with confidence {topic_confidence:.2f} (Detected Language: {detected_language})")
             
             # Step 2: Check conversation context
             context = self.conversation_manager.get_or_create_context(session_id)
@@ -443,12 +451,14 @@ class AdvancedRAGPipeline:
                 context_str = self.conversation_manager.get_context_for_retrieval(session_id)
                 retrieval_query = f"{context_str}\n\nCurrent Question: {query}"
             
-            retrieved_docs = self.retriever.retrieve(retrieval_query, query_topic, top_k=5)
+            # Pass is_translated_query flag to retriever
+            is_translated = (detected_language != "en")
+            retrieved_docs = self.retriever.retrieve(retrieval_query, query_topic, top_k=5, is_translated_query=is_translated)
             
             # Step 4: Generate response
-            if retrieved_docs and retrieved_docs[0].score > 0.1:
-                response = await self._generate_response(query, retrieved_docs, query_topic)
-                confidence = min(retrieved_docs[0].score, 0.9)
+            if retrieved_docs and retrieved_docs.score > 0.1:
+                response = await self._generate_response(query, retrieved_docs, query_topic, detected_language)
+                confidence = min(retrieved_docs.score, 0.9)
             else:
                 response = self._fallback_response(query, query_topic)
                 confidence = 0.1
@@ -476,15 +486,15 @@ class AdvancedRAGPipeline:
                 "error": str(e)
             }
     
-    async def _generate_response(self, query: str, docs: List[RetrievalResult], topic: str) -> str:
+    async def _generate_response(self, query: str, docs: List[RetrievalResult], topic: str, detected_language: str = "en") -> str:
         """Generate response using retrieved documents"""
         if self.gemini_model:
-            return await self._generate_ai_response(query, docs, topic)
+            return await self._generate_ai_response(query, docs, topic, detected_language)
         else:
             return self._generate_template_response(query, docs, topic)
     
-    async def _generate_ai_response(self, query: str, docs: List[RetrievalResult], topic: str) -> str:
-        """Generate AI response using Gemini"""
+    async def _generate_ai_response(self, query: str, docs: List[RetrievalResult], topic: str, detected_language: str = "en") -> str:
+        """Generate AI response using Gemini with enhanced format"""
         try:
             # Prepare context from retrieved documents
             context_docs = "\n\n".join([
@@ -492,39 +502,42 @@ class AdvancedRAGPipeline:
                 for i, doc in enumerate(docs[:3])
             ])
             
-            prompt = f"""You are an expert Indian legal assistant. Answer the query using ONLY the provided legal documents. 
+            prompt = f"""You are an expert Indian legal assistant. Structure responses using this format:
+            
+1️⃣ 👨‍⚖️ USER QUERY REPHRASED (Optional):
+[Rephrase for clarity if needed]
 
-CRITICAL INSTRUCTIONS:
-1. Answer ONLY about {topic.replace('_', ' ').title()}
-2. Use ONLY information from the provided documents
-3. Cite specific sections and acts mentioned in documents
-4. If documents don't contain relevant information, say so clearly
-5. Do not mix information from different legal domains
+2️⃣ ⚖️ LEGAL ANSWER:
+[Clear, concise answer in bullet points (5-7 max)]
+• Point 1
+• Point 2
+
+3️⃣ 📜 LEGAL SOURCES:
+📘 Act/Law: [Name]
+🔹 Section(s): [Numbers]
+⚖️ Case Law: [Landmark judgments if applicable]
+
+4️⃣ 📊 CONFIDENCE INDICATOR:
+✅ Confidence: [High/Medium/Low]
+⚠️ [Warning about limitations if needed]
+
+5️⃣ 🛑 LEGAL DISCLAIMER:
+[Standard disclaimer]
+
+6️⃣ 🔄 NEXT STEPS:
+💬 Suggest 2-3 natural follow-up questions
+
+CRITICAL RULES:
+- Use ONLY information from provided documents
+- Cite specific sections/acts from documents
+- For {topic.replace('_', ' ').title()} queries
+- Maintain professional legal tone
+- **IMPORTANT**: Respond in {LANGUAGES.get(detected_language, detected_language).capitalize()} if the original query was not English.
 
 QUERY: {query}
 
 RELEVANT LEGAL DOCUMENTS:
-{context_docs}
-
-Provide a comprehensive answer following this format:
-⚖️ **[Topic] - [Specific Subject]**
-
-📘 **Overview**: 
-[Brief explanation based on documents]
-
-📜 **Legal Provisions**:
-• Act/Law: [From documents]
-• Section(s): [From documents]
-• Key provisions: [From documents]
-
-💼 **Key Points**:
-[Main legal points from documents]
-
-🛠️ **Practical Application**:
-[How this applies in practice]
-
-🛑 **Legal Disclaimer**: 
-This information is for educational purposes only. Consult a qualified advocate for specific legal matters."""
+{context_docs}"""
 
             response = await asyncio.to_thread(self.gemini_model.generate_content, prompt)
             
@@ -538,21 +551,37 @@ This information is for educational purposes only. Consult a qualified advocate 
             return self._generate_template_response(query, docs, topic)
     
     def _generate_template_response(self, query: str, docs: List[RetrievalResult], topic: str) -> str:
-        """Generate template-based response"""
+        """Generate template-based response with enhanced format"""
         if not docs:
             return self._fallback_response(query, topic)
         
-        primary_doc = docs[0]
+        primary_doc = docs
         
         # Topic-specific templates
         if topic == "contract_law":
-            return self._contract_law_template(query, primary_doc)
+            response = self._contract_law_template(query, primary_doc)
         elif topic == "criminal_law":
-            return self._criminal_law_template(query, primary_doc)
+            response = self._criminal_law_template(query, primary_doc)
         elif topic == "company_law":
-            return self._company_law_template(query, primary_doc)
+            response = self._company_law_template(query, primary_doc)
         else:
-            return self._general_template(query, primary_doc)
+            response = self._general_template(query, primary_doc)
+            
+        # Add standard footer to all template responses
+        return f"""{response}
+
+4️⃣ 📊 CONFIDENCE INDICATOR:
+✅ Confidence: High
+⚠️ Based on template knowledge base
+
+5️⃣ 🛑 LEGAL DISCLAIMER:
+This information is for educational purposes only. Consult a qualified advocate for specific legal matters.
+
+6️⃣ 🔄 NEXT STEPS:
+💬 Would you like to:
+- Know more about related legal provisions?
+- Get examples of how this applies in practice?
+- Understand enforcement procedures?"""
     
     def _contract_law_template(self, query: str, doc: RetrievalResult) -> str:
         """Contract law specific template"""
@@ -675,17 +704,16 @@ This information is for educational purposes only. Consult a qualified company l
 This information is for educational purposes only. Consult a qualified company law advocate for specific legal matters."""
     
     def _general_template(self, query: str, doc: RetrievalResult) -> str:
-        """General template for other topics"""
-        return f"""⚖️ **Legal Response**
+        """General template with enhanced format"""
+        return f"""1️⃣ 👨‍⚖️ USER QUERY REPHRASED:
+"{query}"
 
-📘 **Overview**: 
+2️⃣ ⚖️ LEGAL ANSWER:
 {doc.content[:400]}...
 
-📜 **Source**: 
-{doc.act if doc.act else 'Legal Database'}
-
-🛑 **Legal Disclaimer**: 
-This information is for educational purposes only. Consult a qualified advocate for specific legal matters."""
+3️⃣ 📜 LEGAL SOURCES:
+📘 {doc.act if doc.act else 'Indian Legal Database'}
+🔹 Sections: {', '.join(doc.sections) if doc.sections else 'General Provisions'}"""
     
     def _fallback_response(self, query: str, topic: str) -> str:
         """Fallback response when no relevant documents found"""
