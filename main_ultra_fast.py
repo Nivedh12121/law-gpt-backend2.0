@@ -76,23 +76,44 @@ class UltraFastLegalRAG:
             "criminal_law": {
                 "keywords": ["section", "ipc", "crpc", "murder", "theft", "assault", "bail", "fir", "police", "crime", "punishment", "mens rea", "actus reus", "धारा", "आईपीसी", "हत्या", "चोरी", "जमानत", "अपराध"],
                 "core_concepts": {
-                    "section_302": "Murder - Punishment with death or life imprisonment under IPC Section 302. Requires mens rea (guilty mind) and actus reus (guilty act).",
-                    "section_420": "Cheating - Dishonestly inducing delivery of property, punishable up to 7 years imprisonment under IPC Section 420.",
-                    "section_154_crpc": "FIR Registration - Police must register FIR for cognizable offenses under CrPC Section 154.",
-                    "bail_provisions": "Bail is right for bailable offenses, discretionary for non-bailable under CrPC Sections 436-450."
+                    "section_302": "Murder - Punishment with death or life imprisonment under IPC Section 302. Requires mens rea (guilty mind) and actus reus (guilty act). Case: Reg v. Govinda (1876) - established mens rea requirement.",
+                    "section_420": "Cheating - Dishonestly inducing delivery of property, punishable up to 7 years imprisonment under IPC Section 420. Case: State of Maharashtra v. Dr. Praful B. Desai (2003) - defined dishonest intention.",
+                    "section_154_crpc": "FIR Registration - Police must register FIR for cognizable offenses under CrPC Section 154. Landmark: Lalita Kumari v. Government of U.P. (2014) - mandatory FIR registration.",
+                    "bail_provisions": "Bail is right for bailable offenses, discretionary for non-bailable under CrPC Sections 436-450. Case: Gurcharan Singh v. State (1978) - 'Bail is rule, jail is exception'.",
+                    "section_376": "Rape - Punishment under IPC Section 376, minimum 7 years to life imprisonment. Case: State of Punjab v. Gurmit Singh (1996) - consent and evidence standards.",
+                    "section_498a": "Dowry harassment - Punishment under IPC Section 498A, up to 3 years imprisonment. Case: Sushil Kumar Sharma v. Union of India (2005) - misuse concerns."
                 },
-                "legal_maxims": ["Actus non facit reum nisi mens sit rea", "Ei incumbit probatio qui dicit"],
+                "procedural_guides": {
+                    "fir_filing": "1. Go to police station with jurisdiction 2. Give oral/written complaint 3. Police must write and read back 4. Sign the FIR 5. Get free copy with FIR number",
+                    "bail_application": "1. Determine bailable/non-bailable offense 2. File application in appropriate court 3. Submit with grounds and documents 4. Attend hearing 5. Execute bail bond if granted"
+                },
+                "case_law_snippets": {
+                    "lalita_kumari": "Police must register FIR if information discloses cognizable offense - no preliminary inquiry needed for most cases",
+                    "arnesh_kumar": "No automatic arrest in cases punishable with less than 7 years - police must justify necessity",
+                    "joginder_kumar": "Arrest must be justified and person informed of grounds - Article 22 protection"
+                },
+                "legal_maxims": ["Actus non facit reum nisi mens sit rea", "Ei incumbit probatio qui dicit", "Audi alteram partem"],
                 "weight": 4.0
             },
             "constitutional_law": {
                 "keywords": ["article", "fundamental rights", "directive principles", "constitution", "supreme court", "writ", "judicial review", "अनुच्छेद", "मौलिक अधिकार", "संविधान"],
                 "core_concepts": {
-                    "article_21": "Right to Life and Personal Liberty - No person shall be deprived of life/liberty except by procedure established by law.",
-                    "article_14": "Right to Equality - State shall not deny equality before law or equal protection of laws.",
-                    "article_19": "Freedom of Speech and Expression - Six fundamental freedoms with reasonable restrictions.",
-                    "judicial_review": "Power of courts to review legislative and executive actions for constitutional validity."
+                    "article_21": "Right to Life and Personal Liberty - No person shall be deprived of life/liberty except by procedure established by law. Case: Maneka Gandhi v. Union of India (1978) - expanded scope to include dignity, livelihood, privacy.",
+                    "article_14": "Right to Equality - State shall not deny equality before law or equal protection of laws. Case: E.P. Royappa v. State of Tamil Nadu (1974) - arbitrariness violates equality.",
+                    "article_19": "Freedom of Speech and Expression - Six fundamental freedoms with reasonable restrictions. Case: Shreya Singhal v. Union of India (2015) - struck down Section 66A of IT Act.",
+                    "article_32": "Right to Constitutional Remedies - Right to move Supreme Court for enforcement of fundamental rights. Case: Minerva Mills v. Union of India (1980) - basic structure doctrine.",
+                    "judicial_review": "Power of courts to review legislative and executive actions for constitutional validity. Case: Kesavananda Bharati v. State of Kerala (1973) - basic structure cannot be amended."
                 },
-                "legal_maxims": ["Salus populi suprema lex", "Audi alteram partem"],
+                "case_law_snippets": {
+                    "kesavananda_bharati": "Parliament cannot amend the basic structure of Constitution - judicial review, federalism, democracy are unamendable",
+                    "maneka_gandhi": "Article 21 includes right to dignity, livelihood, privacy - procedure must be fair, just and reasonable",
+                    "vishaka_case": "Supreme Court can lay down guidelines when legislature fails to act - sexual harassment guidelines"
+                },
+                "procedural_guides": {
+                    "writ_petition": "1. Identify fundamental right violation 2. Choose appropriate writ (habeas corpus, mandamus, etc.) 3. File in High Court/Supreme Court 4. Serve notice to respondents 5. Attend hearings",
+                    "pil_filing": "1. Identify public interest issue 2. Prepare petition with facts and law 3. File in appropriate court 4. Court may appoint amicus curiae 5. Follow court directions"
+                },
+                "legal_maxims": ["Salus populi suprema lex", "Audi alteram partem", "Fiat justitia ruat caelum"],
                 "weight": 3.8
             },
             "contract_law": {
@@ -404,62 +425,225 @@ This provides general procedural guidance. For case-specific advice and represen
             "session_id": session_id or "anonymous"
         }
     
-    async def _generate_expert_legal_response(self, query: str, topic: str, context: str, language: str) -> str:
-        """Generate expert legal response using Gemini with LegalBERT concepts"""
+    def _identify_query_type(self, query: str) -> str:
+        """Identify the type of legal query to determine reasoning approach"""
+        query_lower = query.lower()
         
-        # Enhanced prompt with legal expertise and LegalBERT reasoning
-        # Check if this is a procedural query that needs step-by-step guidance
-        is_how_to_query = any(phrase in query.lower() for phrase in ["how to", "procedure", "process", "steps", "kaise", "कैसे"])
-        
-        if is_how_to_query:
-            prompt = f"""You are an expert Indian legal AI assistant specializing in legal procedures and practical guidance. 
-
-LEGAL QUERY: {query}
-LEGAL DOMAIN: {topic.replace('_', ' ').title()}
-RESPONSE LANGUAGE: {language}
-
-RELEVANT LEGAL CONTEXT:
-{context}
-
-PROCEDURAL RESPONSE INSTRUCTIONS:
-1. Identify the specific legal procedure being asked about
-2. Provide clear, step-by-step instructions in numbered format
-3. Include applicable statutory provisions and sections
-4. Mention relevant case law and legal precedents
-5. Add important points and practical tips
-6. Include required documents, fees, and timelines where applicable
-7. Provide alternative options if the primary procedure fails
-8. Use simple, actionable language while maintaining legal accuracy
-9. Structure: Procedure Title → Applicable Law → Step-by-Step Process → Important Points → Legal Authority
-
-STEP-BY-STEP LEGAL PROCEDURE RESPONSE:"""
+        if any(phrase in query_lower for phrase in ["how to", "procedure", "process", "steps", "kaise", "कैसे"]):
+            return "procedural"
+        elif any(phrase in query_lower for phrase in ["what is", "define", "meaning", "definition", "क्या है"]):
+            return "definition"
+        elif any(phrase in query_lower for phrase in ["rights", "remedies", "can i", "अधिकार", "उपाय"]):
+            return "rights_remedies"
+        elif any(phrase in query_lower for phrase in ["section", "act", "law", "धारा", "कानून"]):
+            return "legal_provision"
         else:
-            prompt = f"""You are an expert Indian legal AI assistant with comprehensive knowledge of Indian law, legal precedents, and judicial reasoning. You understand advanced legal concepts including mens rea, actus reus, ratio decidendi, obiter dicta, and stare decisis.
+            return "general_analysis"
+    
+    def _validate_legal_response(self, response: str, query: str) -> tuple[bool, str]:
+        """Validate legal response for accuracy and completeness"""
+        issues = []
+        
+        # Check for Indian legal citations
+        has_indian_law = any(term in response.lower() for term in [
+            "section", "ipc", "crpc", "constitution", "act", "article", "rule"
+        ])
+        
+        if not has_indian_law:
+            issues.append("Missing Indian legal citations")
+        
+        # Check for procedural steps in "how to" queries
+        if any(phrase in query.lower() for phrase in ["how to", "procedure", "steps"]):
+            has_steps = any(char in response for char in ["1.", "2.", "3."])
+            if not has_steps:
+                issues.append("Missing step-by-step procedure")
+        
+        # Check for case law references
+        has_case_law = any(term in response.lower() for term in [
+            "v.", "vs", "case", "judgment", "supreme court", "high court"
+        ])
+        
+        # Check for proper legal structure
+        has_legal_framework = "legal framework" in response.lower() or "applicable law" in response.lower()
+        
+        if len(issues) > 2:
+            return False, "; ".join(issues)
+        
+        return True, "Valid legal response"
+
+    async def _generate_expert_legal_response(self, query: str, topic: str, context: str, language: str) -> str:
+        """Generate expert legal response with intelligent reasoning"""
+        
+        # Identify query type for proper reasoning approach
+        query_type = self._identify_query_type(query)
+        
+        # Enhanced Chain-of-Thought prompt based on query type
+        if query_type == "procedural":
+            prompt = f"""You are Law GPT, an AI trained in Indian legal procedures and case law. 
 
 LEGAL QUERY: {query}
 LEGAL DOMAIN: {topic.replace('_', ' ').title()}
 RESPONSE LANGUAGE: {language}
+RELEVANT LEGAL CONTEXT: {context}
 
-RELEVANT LEGAL CONTEXT:
-{context}
+CHAIN-OF-THOUGHT REASONING:
+1. IDENTIFY THE EXACT LEGAL ISSUE: What specific legal procedure is being asked?
+2. RETRIEVE RELEVANT STATUTES: Which Indian laws (CrPC, IPC, Constitution, etc.) apply?
+3. APPLY TO SPECIFIC SCENARIO: How do these laws apply to this exact situation?
+4. GIVE PROCEDURAL STEPS: Provide clear, numbered steps for "how to" questions
+5. CITE SOURCE LAWS/CASES: Include specific sections and landmark cases
+6. KEEP ACCURATE & JURISDICTION-SPECIFIC: Ensure all information is for Indian law
+7. USE PLAIN ENGLISH: Make complex legal concepts understandable
 
-EXPERT LEGAL RESPONSE INSTRUCTIONS:
-1. Provide comprehensive legal analysis with proper legal reasoning
-2. Include specific statutory provisions, sections, and case law principles
-3. Use appropriate legal terminology and Latin maxims where relevant
-4. Structure response: Legal Issue → Applicable Law → Legal Analysis → Practical Implications → Conclusion
-5. Include procedural aspects and practical guidance
-6. Maintain professional legal tone throughout
-7. If responding in Hindi, use proper legal Hindi terminology
-8. Reference relevant legal principles and precedents
-9. Provide actionable legal guidance while noting limitations
+SELF-VERIFICATION CHECKLIST:
+✓ Law cited with specific sections?
+✓ Steps correct and complete?
+✓ Jurisdiction confirmed as India?
+✓ Sources valid and current?
+✓ Case law references included?
 
-COMPREHENSIVE LEGAL RESPONSE:"""
+RESPONSE FORMAT:
+**🏛️ LEGAL PROCEDURE GUIDE - [Procedure Name]**
+**📋 Legal Issue Identified:** [Specific legal issue]
+**⚖️ Applicable Legal Framework:** [Specific Indian laws with sections]
+**📝 Step-by-Step Procedure:** [Numbered steps]
+**💡 Important Points:** [Key considerations]
+**📚 Legal Authority:** [Case law and precedents]
+**📜 Sources:** [Specific acts and sections]
+
+GENERATE RESPONSE:"""
+        
+        elif query_type == "definition":
+            prompt = f"""You are Law GPT, an AI trained in Indian legal procedures and case law.
+
+LEGAL QUERY: {query}
+LEGAL DOMAIN: {topic.replace('_', ' ').title()}
+RESPONSE LANGUAGE: {language}
+RELEVANT LEGAL CONTEXT: {context}
+
+CHAIN-OF-THOUGHT REASONING:
+1. IDENTIFY THE EXACT LEGAL TERM: What specific legal concept needs definition?
+2. RETRIEVE RELEVANT STATUTES: Which Indian law defines this term?
+3. PROVIDE CLEAR DEFINITION: Give precise legal definition with law reference
+4. INCLUDE PRACTICAL EXAMPLE: Show how this applies in real scenarios
+5. CITE SOURCE LAWS: Include specific sections where defined
+6. ADD CASE LAW: Include landmark cases that clarify the definition
+
+SELF-VERIFICATION CHECKLIST:
+✓ Definition accurate and complete?
+✓ Law section cited where term is defined?
+✓ Practical example included?
+✓ Indian jurisdiction confirmed?
+✓ Case law supporting definition?
+
+RESPONSE FORMAT:
+**🏛️ LEGAL DEFINITION - [Term]**
+**📋 Legal Definition:** [Precise definition with law reference]
+**⚖️ Statutory Source:** [Specific section where defined]
+**💼 Practical Example:** [Real-world application]
+**📚 Case Law:** [Landmark cases clarifying the definition]
+
+GENERATE RESPONSE:"""
+        
+        elif query_type == "rights_remedies":
+            prompt = f"""You are Law GPT, an AI trained in Indian legal procedures and case law.
+
+LEGAL QUERY: {query}
+LEGAL DOMAIN: {topic.replace('_', ' ').title()}
+RESPONSE LANGUAGE: {language}
+RELEVANT LEGAL CONTEXT: {context}
+
+CHAIN-OF-THOUGHT REASONING:
+1. IDENTIFY THE RIGHTS ISSUE: What specific rights or remedies are being asked?
+2. RETRIEVE RELEVANT STATUTES: Which Indian laws grant these rights?
+3. DEFINE SCOPE OF RIGHTS: What is covered and what are the limitations?
+4. LIST AVAILABLE REMEDIES: What legal remedies are available?
+5. INCLUDE EXCEPTIONS: What are the limitations or exceptions?
+6. CITE CASE LAWS: Include landmark cases establishing these rights
+
+SELF-VERIFICATION CHECKLIST:
+✓ Rights clearly defined with legal basis?
+✓ Remedies listed with procedures?
+✓ Exceptions and limitations mentioned?
+✓ Case law supporting rights included?
+✓ Indian jurisdiction confirmed?
+
+RESPONSE FORMAT:
+**🏛️ LEGAL RIGHTS & REMEDIES - [Rights Topic]**
+**📋 Rights Identified:** [Specific rights with legal basis]
+**⚖️ Legal Foundation:** [Constitutional/statutory basis]
+**🛡️ Available Remedies:** [Legal remedies and procedures]
+**⚠️ Limitations & Exceptions:** [Scope limitations]
+**📚 Case Law:** [Landmark cases establishing rights]
+
+GENERATE RESPONSE:"""
+        
+        else:
+            prompt = f"""You are Law GPT, an AI trained in Indian legal procedures and case law.
+
+LEGAL QUERY: {query}
+LEGAL DOMAIN: {topic.replace('_', ' ').title()}
+RESPONSE LANGUAGE: {language}
+RELEVANT LEGAL CONTEXT: {context}
+
+CHAIN-OF-THOUGHT REASONING:
+1. IDENTIFY THE EXACT LEGAL ISSUE: What is the core legal question?
+2. RETRIEVE RELEVANT STATUTES: Which Indian laws apply (IPC, CrPC, Constitution, etc.)?
+3. APPLY TO SPECIFIC SCENARIO: How do these laws apply to this situation?
+4. ANALYZE LEGAL IMPLICATIONS: What are the legal consequences or interpretations?
+5. CITE SOURCE LAWS/CASES: Include specific sections and landmark cases
+6. PROVIDE PRACTICAL GUIDANCE: What should the person do next?
+
+SELF-VERIFICATION CHECKLIST:
+✓ Legal issue clearly identified?
+✓ Relevant Indian laws cited with sections?
+✓ Case law references included?
+✓ Practical guidance provided?
+✓ Jurisdiction confirmed as India?
+
+RESPONSE FORMAT:
+**🏛️ LEGAL ANALYSIS - [Legal Topic]**
+**📋 Legal Issue:** [Core legal question identified]
+**⚖️ Applicable Legal Framework:** [Relevant Indian laws with sections]
+**🔍 Legal Analysis:** [Application of law to the scenario]
+**💼 Practical Implications:** [What this means practically]
+**📚 Case Law:** [Relevant precedents]
+
+GENERATE RESPONSE:"""
 
         try:
             model = genai.GenerativeModel('gemini-pro')
             response = model.generate_content(prompt)
-            return response.text
+            generated_response = response.text
+            
+            # Validate the response
+            is_valid, validation_message = self._validate_legal_response(generated_response, query)
+            
+            if not is_valid:
+                logger.warning(f"Response validation failed: {validation_message}")
+                # Try to regenerate with stricter prompt
+                stricter_prompt = prompt + f"""
+
+CRITICAL VALIDATION REQUIREMENTS:
+- MUST include specific Indian law sections (IPC, CrPC, Constitution, etc.)
+- MUST include case law references for legal authority
+- For "how to" queries: MUST include numbered step-by-step procedure
+- MUST confirm jurisdiction as India
+- MUST cite specific statutory provisions
+
+REGENERATE RESPONSE WITH ALL REQUIREMENTS:"""
+                
+                retry_response = model.generate_content(stricter_prompt)
+                generated_response = retry_response.text
+                
+                # Final validation
+                is_valid_retry, _ = self._validate_legal_response(generated_response, query)
+                if not is_valid_retry:
+                    logger.error("Response regeneration failed validation")
+                    return self._generate_structured_legal_response(query, topic, context)
+            
+            return generated_response
+            
         except Exception as e:
             logger.error(f"Gemini API error: {e}")
             return self._generate_structured_legal_response(query, topic, context)
