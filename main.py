@@ -40,6 +40,19 @@ class ChatResponse(BaseModel):
     model_type: str
     session_id: str
 
+class VoiceRequest(BaseModel):
+    text: str
+    voice_type: str = "male"  # male, female
+    language: str = "en"
+    session_id: str = None
+
+class VoiceResponse(BaseModel):
+    audio_url: str = None
+    audio_data: str = None  # base64 encoded audio
+    voice_type: str
+    text: str
+    processing_time: float
+
 # Global variables
 app = FastAPI(title="Law GPT - Ultra Fast Cloud Backend", version="3.0-ultra-fast")
 
@@ -590,35 +603,39 @@ RESPONSE FORMAT:
 GENERATE RESPONSE:"""
         
         else:
-            prompt = f"""You are Law GPT, an AI trained in Indian legal procedures and case law.
+            prompt = f"""You are Law GPT, an advanced AI legal assistant with comprehensive knowledge of Indian law and legal procedures.
 
 LEGAL QUERY: {query}
 LEGAL DOMAIN: {topic.replace('_', ' ').title()}
 RESPONSE LANGUAGE: {language}
 RELEVANT LEGAL CONTEXT: {context}
 
-CHAIN-OF-THOUGHT REASONING:
-1. IDENTIFY THE EXACT LEGAL ISSUE: What is the core legal question?
-2. RETRIEVE RELEVANT STATUTES: Which Indian laws apply (IPC, CrPC, Constitution, etc.)?
-3. APPLY TO SPECIFIC SCENARIO: How do these laws apply to this situation?
-4. ANALYZE LEGAL IMPLICATIONS: What are the legal consequences or interpretations?
-5. CITE SOURCE LAWS/CASES: Include specific sections and landmark cases
-6. PROVIDE PRACTICAL GUIDANCE: What should the person do next?
+ENHANCED REASONING APPROACH:
+1. UNDERSTAND THE QUERY: What exactly is the user asking? (Don't restrict by domain)
+2. IDENTIFY APPLICABLE LAWS: Which Indian laws, acts, or regulations apply?
+3. PROVIDE COMPREHENSIVE ANSWER: Give complete, helpful information regardless of legal domain
+4. INCLUDE PRACTICAL STEPS: Provide actionable guidance and procedures
+5. CITE RELEVANT SOURCES: Include applicable laws, sections, and cases
+6. OFFER ADDITIONAL HELP: Suggest next steps or related information
 
-SELF-VERIFICATION CHECKLIST:
-✓ Legal issue clearly identified?
-✓ Relevant Indian laws cited with sections?
-✓ Case law references included?
-✓ Practical guidance provided?
-✓ Jurisdiction confirmed as India?
+UNIVERSAL LEGAL ASSISTANCE:
+- Answer ALL legal questions across ALL domains of Indian law
+- Include motor vehicles, licensing, administrative procedures
+- Cover both legal and procedural aspects
+- Provide practical, actionable guidance
+- No domain restrictions - help with any legal matter
 
 RESPONSE FORMAT:
-**🏛️ LEGAL ANALYSIS - [Legal Topic]**
-**📋 Legal Issue:** [Core legal question identified]
-**⚖️ Applicable Legal Framework:** [Relevant Indian laws with sections]
-**🔍 Legal Analysis:** [Application of law to the scenario]
-**💼 Practical Implications:** [What this means practically]
-**📚 Case Law:** [Relevant precedents]
+**🏛️ COMPREHENSIVE LEGAL GUIDANCE - [Topic]**
+**📋 Your Question:** {query}
+**⚖️ Applicable Legal Framework:** [Relevant Indian laws and regulations]
+**🔍 Detailed Analysis:** [Complete explanation and guidance]
+**📝 Step-by-Step Process:** [Practical steps to follow]
+**💡 Key Points:** [Important considerations and tips]
+**📚 Legal Sources:** [Relevant acts, sections, and authorities]
+**🎯 Next Steps:** [What to do next or additional resources]
+
+IMPORTANT: Provide comprehensive, helpful answers for ANY legal question. Do not restrict responses based on legal domain. The goal is to be maximally helpful to users seeking legal guidance.
 
 GENERATE RESPONSE:"""
 
@@ -1424,6 +1441,74 @@ async def get_legal_domains():
         "total_domains": len(domains),
         "domains": domains,
         "model_type": "ultra_fast_legal_bert_cloud"
+    }
+
+@app.post("/text-to-speech")
+async def text_to_speech(request: VoiceRequest):
+    """Convert text to speech with male/female voice options"""
+    start_time = datetime.now()
+    
+    try:
+        # Voice configuration based on type and language
+        voice_config = {
+            "male": {
+                "en": {"name": "en-US-JennyNeural", "style": "professional"},
+                "hi": {"name": "hi-IN-MadhurNeural", "style": "friendly"}
+            },
+            "female": {
+                "en": {"name": "en-US-AriaNeural", "style": "professional"},
+                "hi": {"name": "hi-IN-SwaraNeural", "style": "friendly"}
+            }
+        }
+        
+        # Get voice configuration
+        voice_info = voice_config.get(request.voice_type, voice_config["male"])
+        selected_voice = voice_info.get(request.language, voice_info["en"])
+        
+        processing_time = (datetime.now() - start_time).total_seconds()
+        
+        # Return voice configuration (Web Speech API will handle actual TTS)
+        return VoiceResponse(
+            audio_url="",  # Browser will handle TTS
+            audio_data="",  # Browser will handle TTS
+            voice_type=request.voice_type,
+            text=request.text,
+            processing_time=processing_time
+        )
+        
+    except Exception as e:
+        logger.error(f"Voice synthesis error: {e}")
+        raise HTTPException(status_code=500, detail=f"Voice synthesis failed: {str(e)}")
+
+@app.get("/voice-config")
+async def get_voice_config():
+    """Get available voice configuration options"""
+    return {
+        "voice_types": ["male", "female"],
+        "languages": ["en", "hi"],
+        "voice_models": {
+            "male": {
+                "en": "Professional Male English Voice",
+                "hi": "Professional Male Hindi Voice"
+            },
+            "female": {
+                "en": "Professional Female English Voice", 
+                "hi": "Professional Female Hindi Voice"
+            }
+        },
+        "features": [
+            "Real-time text-to-speech using Web Speech API",
+            "Multiple voice personalities (Male/Female)",
+            "Bilingual support (English/Hindi)",
+            "Professional legal tone",
+            "No external API costs - Browser-based TTS"
+        ],
+        "browser_support": {
+            "chrome": "✅ Full support",
+            "firefox": "✅ Full support", 
+            "safari": "✅ Full support",
+            "edge": "✅ Full support"
+        }
     }
 
 if __name__ == "__main__":
