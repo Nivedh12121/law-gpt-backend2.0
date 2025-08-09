@@ -528,39 +528,25 @@ This provides general procedural guidance. For case-specific advice and represen
         return True, "Valid legal response"
     
     def _check_response_relevance(self, query: str, response: str) -> bool:
-        """Check if the response is relevant to the user's question"""
+        """Check if the response is relevant to the user's question (basic check)"""
         query_lower = query.lower()
         response_lower = response.lower()
         
-        # Extract key terms from query
-        key_terms = []
+        # Only check for major topic confusion (the main issue we fixed)
+        major_confusions = [
+            # If asking about bail, shouldn't get driving license info
+            ("bail" in query_lower and "driving license" in response_lower and "rto" in response_lower),
+            # If asking about driving license, shouldn't get bail info  
+            (("driving" in query_lower or "license" in query_lower) and "bail application" in response_lower and "court" in response_lower and "crpc" in response_lower),
+            # Basic sanity check - response should have some content
+            (len(response.strip()) < 50)
+        ]
         
-        # Check for specific legal terms in query
-        if "bail" in query_lower:
-            key_terms.append("bail")
-        if "driving" in query_lower or "license" in query_lower or "licence" in query_lower:
-            key_terms.extend(["driving", "license", "licence", "rto", "motor"])
-        if "article" in query_lower:
-            key_terms.append("article")
-        if "section" in query_lower:
-            key_terms.append("section")
-        if "divorce" in query_lower:
-            key_terms.append("divorce")
-        if "property" in query_lower:
-            key_terms.append("property")
-        
-        # If no specific terms, assume relevant
-        if not key_terms:
-            return True
+        # If any major confusion detected, mark as irrelevant
+        if any(confusion for confusion in major_confusions):
+            return False
             
-        # Check if at least one key term appears in response
-        relevance_found = any(term in response_lower for term in key_terms)
-        
-        # Additional check: if query has "how to" and response doesn't have steps, might be irrelevant
-        if "how to" in query_lower and "step" not in response_lower and "process" not in response_lower:
-            relevance_found = False
-            
-        return relevance_found
+        return True  # Otherwise assume relevant (less strict validation)
 
     async def _generate_expert_legal_response(self, query: str, topic: str, context: str, language: str) -> str:
         """Generate clear, direct legal response with proper understanding"""
