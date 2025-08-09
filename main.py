@@ -179,6 +179,39 @@ class UltraFastLegalRAG:
                 "legal_maxims": ["Corporate veil", "Ultra vires doctrine"],
                 "weight": 3.1
             },
+            "motor_vehicles_law": {
+                "keywords": ["driving license", "licence", "vehicle", "motor", "transport", "rto", "driving", "license", "dl", "वाहन", "ड्राइविंग लाइसेंस", "परमिट", "आरटीओ"],
+                "core_concepts": {
+                    "driving_license": "Driving license required under Motor Vehicles Act 1988 Section 3. Apply at RTO with documents, pass tests for Learning License then Permanent License.",
+                    "license_types": "Different categories: LMV (Light Motor Vehicle), HMV (Heavy Motor Vehicle), MCWG (Motor Cycle With Gear), MCWOG (Motor Cycle Without Gear), Transport vehicles.",
+                    "application_process": "1. Apply for Learning License with Form 1, documents, medical certificate 2. Pass computer test 3. After 30 days apply for Permanent License 4. Pass driving test 5. Get license within 30 days.",
+                    "required_documents": "Age proof, Address proof, Medical certificate, Passport photos, Fee payment receipt. For LMV minimum age 18, for HMV minimum age 20.",
+                    "license_validity": "Valid for 20 years until age 50, then renewable every 5 years. International Driving Permit available for overseas driving.",
+                    "penalties": "Driving without license: Fine up to Rs.5000 and/or imprisonment up to 3 months under Section 181 of Motor Vehicles Act 1988."
+                },
+                "procedural_guides": {
+                    "ll_application": "1. Visit RTO office or apply online 2. Fill Form 1 for Learning License 3. Submit documents and fees 4. Pass computer-based test 5. Get LL valid for 6 months",
+                    "dl_application": "1. Hold LL for minimum 30 days 2. Fill Form 6 for Permanent License 3. Pass practical driving test 4. Submit to RTO 5. Get DL within 30 days"
+                },
+                "legal_maxims": ["Road safety is paramount", "Licensed driving is legal obligation"],
+                "weight": 3.8
+            },
+            "general_law": {
+                "keywords": ["legal", "law", "advice", "help", "rights", "procedure", "court", "lawyer", "advocate", "कानून", "सलाह", "अधिकार", "न्यायालय", "वकील"],
+                "core_concepts": {
+                    "legal_rights": "Every citizen has fundamental rights under Constitution and legal remedies through courts for violation of rights.",
+                    "court_system": "Three-tier system: Supreme Court (apex), High Courts (state level), District Courts (local level) with specific jurisdictions.",
+                    "legal_procedure": "Civil and criminal procedures governed by CPC 1908 and CrPC 1973 respectively with specific timelines and requirements.",
+                    "legal_aid": "Free legal aid available under Legal Services Authority Act 1987 for economically weaker sections and marginalized communities.",
+                    "alternative_dispute": "ADR mechanisms like mediation, arbitration, conciliation available as alternatives to lengthy court proceedings."
+                },
+                "procedural_guides": {
+                    "legal_consultation": "1. Identify legal issue category 2. Consult appropriate specialist lawyer 3. Get written legal opinion 4. Follow legal procedure 5. Maintain proper documentation",
+                    "court_filing": "1. Draft proper pleadings 2. Pay court fees 3. Serve notice to opposite party 4. Attend hearings 5. Follow court orders and timelines"
+                },
+                "legal_maxims": ["Ignorantia juris non excusat", "Justice delayed is justice denied", "Audi alteram partem"],
+                "weight": 3.1
+            },
             "tort_law": {
                 "keywords": ["negligence", "tort", "liability", "damages", "duty of care", "causation", "vicarious liability"],
                 "core_concepts": {
@@ -1124,19 +1157,13 @@ async def startup_event():
 async def root():
     """Root endpoint"""
     return {
-        "message": "Law GPT - Ultra Fast Cloud Backend API",
-        "version": "3.0-ultra-fast",
-        "status": "operational",
-        "features": [
-            "ultra_fast_startup",
-            "cloud_only_apis", 
-            "legal_bert_concepts", 
-            "expert_legal_reasoning",
-            "instant_deployment",
-            "advanced_topic_classification",
-            "multilingual_support",
-            "no_model_downloads"
-        ],
+        "message": "🎯 Law GPT Backend is running successfully!",
+        "status": "operational", 
+        "version": "3.0-ultra-fast-voice",
+        "features": ["Ultra-fast legal reasoning", "Document drafting", "Citation validation", "Form guidance", "Voice chat (Male/Female)"],
+        "endpoints": ["/chat", "/health", "/stats", "/capabilities", "/text-to-speech", "/voice-config"],
+        "model": "Gemini-1.5-Flash with LegalBERT reasoning",
+        "voice_support": "Full voice integration with male/female options",
         "startup_time": "< 2 seconds",
         "timestamp": datetime.now().isoformat()
     }
