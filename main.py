@@ -434,8 +434,7 @@ This provides general procedural guidance. For case-specific advice and represen
             # Generate response
             if self.ai_enabled:
                 try:
-                    query_type = self._identify_query_type(query)
-                    logger.info(f"🧠 AI enabled - generating Chain-of-Thought response for query type: {query_type}")
+                    logger.info(f"🧠 AI enabled - generating direct response")
                     logger.info(f"📊 Topic: {topic}, Confidence: {topic_confidence:.2f}")
                     response = await self._generate_expert_legal_response(query, topic, legal_context, detected_language)
                     confidence = min(topic_confidence + 0.2, 0.95)
@@ -527,153 +526,87 @@ This provides general procedural guidance. For case-specific advice and represen
             return False, "; ".join(issues)
         
         return True, "Valid legal response"
+    
+    def _check_response_relevance(self, query: str, response: str) -> bool:
+        """Check if the response is relevant to the user's question"""
+        query_lower = query.lower()
+        response_lower = response.lower()
+        
+        # Extract key terms from query
+        key_terms = []
+        
+        # Check for specific legal terms in query
+        if "bail" in query_lower:
+            key_terms.append("bail")
+        if "driving" in query_lower or "license" in query_lower or "licence" in query_lower:
+            key_terms.extend(["driving", "license", "licence", "rto", "motor"])
+        if "article" in query_lower:
+            key_terms.append("article")
+        if "section" in query_lower:
+            key_terms.append("section")
+        if "divorce" in query_lower:
+            key_terms.append("divorce")
+        if "property" in query_lower:
+            key_terms.append("property")
+        
+        # If no specific terms, assume relevant
+        if not key_terms:
+            return True
+            
+        # Check if at least one key term appears in response
+        relevance_found = any(term in response_lower for term in key_terms)
+        
+        # Additional check: if query has "how to" and response doesn't have steps, might be irrelevant
+        if "how to" in query_lower and "step" not in response_lower and "process" not in response_lower:
+            relevance_found = False
+            
+        return relevance_found
 
     async def _generate_expert_legal_response(self, query: str, topic: str, context: str, language: str) -> str:
-        """Generate expert legal response with intelligent reasoning"""
+        """Generate clear, direct legal response with proper understanding"""
         
-        # Identify query type for proper reasoning approach
-        query_type = self._identify_query_type(query)
-        
-        # Enhanced Chain-of-Thought prompt based on query type
-        if query_type == "procedural":
-            prompt = f"""You are Law GPT, an AI trained in Indian legal procedures and case law. 
+        # Create a much simpler, more direct prompt
+        prompt = f"""You are Law GPT, an expert AI legal assistant specializing in Indian law.
 
-LEGAL QUERY: {query}
-LEGAL DOMAIN: {topic.replace('_', ' ').title()}
-RESPONSE LANGUAGE: {language}
-RELEVANT LEGAL CONTEXT: {context}
+USER'S QUESTION: {query}
+LEGAL TOPIC: {topic.replace('_', ' ').title()}
 
-CHAIN-OF-THOUGHT REASONING:
-1. IDENTIFY THE EXACT LEGAL ISSUE: What specific legal procedure is being asked?
-2. RETRIEVE RELEVANT STATUTES: Which Indian laws (CrPC, IPC, Constitution, etc.) apply?
-3. APPLY TO SPECIFIC SCENARIO: How do these laws apply to this exact situation?
-4. GIVE PROCEDURAL STEPS: Provide clear, numbered steps for "how to" questions
-5. CITE SOURCE LAWS/CASES: Include specific sections and landmark cases
-6. KEEP ACCURATE & JURISDICTION-SPECIFIC: Ensure all information is for Indian law
-7. USE PLAIN ENGLISH: Make complex legal concepts understandable
+INSTRUCTIONS:
+1. Read the user's question carefully and understand exactly what they are asking
+2. Answer ONLY their specific question - do not mix topics or provide unrelated information  
+3. If they ask about bail, answer about bail procedures
+4. If they ask about driving license, answer about driving license procedures
+5. If they ask about articles, answer about constitutional articles
+6. Stay focused on their exact question
 
-SELF-VERIFICATION CHECKLIST:
-✓ Law cited with specific sections?
-✓ Steps correct and complete?
-✓ Jurisdiction confirmed as India?
-✓ Sources valid and current?
-✓ Case law references included?
+LEGAL KNOWLEDGE TO USE:
+- Indian Constitution (Articles 1-395)
+- Indian Penal Code (IPC Sections)
+- Criminal Procedure Code (CrPC)  
+- Motor Vehicles Act, 1988
+- Civil Procedure Code
+- All other Indian laws and procedures
 
 RESPONSE FORMAT:
-**🏛️ LEGAL PROCEDURE GUIDE - [Procedure Name]**
-**📋 Legal Issue Identified:** [Specific legal issue]
-**⚖️ Applicable Legal Framework:** [Specific Indian laws with sections]
-**📝 Step-by-Step Procedure:** [Numbered steps]
-**💡 Important Points:** [Key considerations]
-**📚 Legal Authority:** [Case law and precedents]
-**📜 Sources:** [Specific acts and sections]
+**🏛️ LEGAL GUIDANCE - [Answer their specific topic]**
 
-GENERATE RESPONSE:"""
-        
-        elif query_type == "definition":
-            prompt = f"""You are Law GPT, an AI trained in Indian legal procedures and case law.
+**📋 Your Question:** [Restate their exact question]
 
-LEGAL QUERY: {query}
-LEGAL DOMAIN: {topic.replace('_', ' ').title()}
-RESPONSE LANGUAGE: {language}
-RELEVANT LEGAL CONTEXT: {context}
+**⚖️ Legal Answer:** 
+[Provide clear, direct answer to their question with relevant Indian law sections, procedures, and requirements. Include step-by-step guidance if they ask "how to" do something.]
 
-CHAIN-OF-THOUGHT REASONING:
-1. IDENTIFY THE EXACT LEGAL TERM: What specific legal concept needs definition?
-2. RETRIEVE RELEVANT STATUTES: Which Indian law defines this term?
-3. PROVIDE CLEAR DEFINITION: Give precise legal definition with law reference
-4. INCLUDE PRACTICAL EXAMPLE: Show how this applies in real scenarios
-5. CITE SOURCE LAWS: Include specific sections where defined
-6. ADD CASE LAW: Include landmark cases that clarify the definition
+**📝 Key Points:**
+• [Important legal requirements]
+• [Necessary documents or procedures] 
+• [Timeframes or deadlines]
+• [Relevant authorities to contact]
 
-SELF-VERIFICATION CHECKLIST:
-✓ Definition accurate and complete?
-✓ Law section cited where term is defined?
-✓ Practical example included?
-✓ Indian jurisdiction confirmed?
-✓ Case law supporting definition?
+**📚 Legal Authority:** [Relevant Acts, Sections, and official sources]
 
-RESPONSE FORMAT:
-**🏛️ LEGAL DEFINITION - [Term]**
-**📋 Legal Definition:** [Precise definition with law reference]
-**⚖️ Statutory Source:** [Specific section where defined]
-**💼 Practical Example:** [Real-world application]
-**📚 Case Law:** [Landmark cases clarifying the definition]
-
-GENERATE RESPONSE:"""
-        
-        elif query_type == "rights_remedies":
-            prompt = f"""You are Law GPT, an AI trained in Indian legal procedures and case law.
-
-LEGAL QUERY: {query}
-LEGAL DOMAIN: {topic.replace('_', ' ').title()}
-RESPONSE LANGUAGE: {language}
-RELEVANT LEGAL CONTEXT: {context}
-
-CHAIN-OF-THOUGHT REASONING:
-1. IDENTIFY THE RIGHTS ISSUE: What specific rights or remedies are being asked?
-2. RETRIEVE RELEVANT STATUTES: Which Indian laws grant these rights?
-3. DEFINE SCOPE OF RIGHTS: What is covered and what are the limitations?
-4. LIST AVAILABLE REMEDIES: What legal remedies are available?
-5. INCLUDE EXCEPTIONS: What are the limitations or exceptions?
-6. CITE CASE LAWS: Include landmark cases establishing these rights
-
-SELF-VERIFICATION CHECKLIST:
-✓ Rights clearly defined with legal basis?
-✓ Remedies listed with procedures?
-✓ Exceptions and limitations mentioned?
-✓ Case law supporting rights included?
-✓ Indian jurisdiction confirmed?
-
-RESPONSE FORMAT:
-**🏛️ LEGAL RIGHTS & REMEDIES - [Rights Topic]**
-**📋 Rights Identified:** [Specific rights with legal basis]
-**⚖️ Legal Foundation:** [Constitutional/statutory basis]
-**🛡️ Available Remedies:** [Legal remedies and procedures]
-**⚠️ Limitations & Exceptions:** [Scope limitations]
-**📚 Case Law:** [Landmark cases establishing rights]
-
-GENERATE RESPONSE:"""
-        
-        else:
-            prompt = f"""You are Law GPT, an advanced AI legal assistant with comprehensive knowledge of Indian law and legal procedures.
-
-LEGAL QUERY: {query}
-LEGAL DOMAIN: {topic.replace('_', ' ').title()}
-RESPONSE LANGUAGE: {language}
-RELEVANT LEGAL CONTEXT: {context}
-
-ENHANCED REASONING APPROACH:
-1. UNDERSTAND THE QUERY: What exactly is the user asking? (Don't restrict by domain)
-2. IDENTIFY APPLICABLE LAWS: Which Indian laws, acts, or regulations apply?
-3. PROVIDE COMPREHENSIVE ANSWER: Give complete, helpful information regardless of legal domain
-4. INCLUDE PRACTICAL STEPS: Provide actionable guidance and procedures
-5. CITE RELEVANT SOURCES: Include applicable laws, sections, and cases
-6. OFFER ADDITIONAL HELP: Suggest next steps or related information
-
-UNIVERSAL LEGAL ASSISTANCE:
-- Answer ALL legal questions across ALL domains of Indian law
-- Include motor vehicles, licensing, administrative procedures
-- Cover both legal and procedural aspects
-- Provide practical, actionable guidance
-- No domain restrictions - help with any legal matter
-
-RESPONSE FORMAT:
-**🏛️ COMPREHENSIVE LEGAL GUIDANCE - [Topic]**
-**📋 Your Question:** {query}
-**⚖️ Applicable Legal Framework:** [Relevant Indian laws and regulations]
-**🔍 Detailed Analysis:** [Complete explanation and guidance]
-**📝 Step-by-Step Process:** [Practical steps to follow]
-**💡 Key Points:** [Important considerations and tips]
-**📚 Legal Sources:** [Relevant acts, sections, and authorities]
-**🎯 Next Steps:** [What to do next or additional resources]
-
-IMPORTANT: Provide comprehensive, helpful answers for ANY legal question. Do not restrict responses based on legal domain. The goal is to be maximally helpful to users seeking legal guidance.
-
-GENERATE RESPONSE:"""
+Generate a clear, direct answer to their question."""
 
         try:
-            logger.info(f"🤖 Generating AI response using Chain-of-Thought for query type: {query_type}")
+            logger.info(f"🤖 Generating direct AI response for query")
             model = genai.GenerativeModel('gemini-1.5-flash')
             response = model.generate_content(prompt)
             
@@ -681,43 +614,15 @@ GENERATE RESPONSE:"""
                 logger.error("❌ Empty response from Gemini API")
                 return self._generate_structured_legal_response(query, topic, context)
             
-            generated_response = response.text
+            generated_response = response.text.strip()
             logger.info(f"✅ AI response generated successfully ({len(generated_response)} chars)")
             
-            # Validate the response with more lenient criteria
-            is_valid, validation_message = self._validate_legal_response(generated_response, query)
-            
-            if not is_valid:
-                logger.warning(f"⚠️ Response validation failed: {validation_message}")
-                logger.info("🔄 Attempting to regenerate with stricter requirements...")
-                
-                # Try to regenerate with stricter prompt
-                stricter_prompt = prompt + f"""
-
-CRITICAL VALIDATION REQUIREMENTS:
-- MUST include specific Indian law sections (IPC, CrPC, Constitution, etc.)
-- MUST include case law references for legal authority
-- For "how to" queries: MUST include numbered step-by-step procedure
-- MUST confirm jurisdiction as India
-- MUST cite specific statutory provisions
-
-REGENERATE RESPONSE WITH ALL REQUIREMENTS:"""
-                
-                retry_response = model.generate_content(stricter_prompt)
-                if retry_response and retry_response.text:
-                    generated_response = retry_response.text
-                    logger.info("✅ Response regenerated successfully")
-                    
-                    # Final validation - more lenient
-                    is_valid_retry, _ = self._validate_legal_response(generated_response, query)
-                    if not is_valid_retry:
-                        logger.warning("⚠️ Regenerated response still has issues, but using it anyway")
-                else:
-                    logger.error("❌ Response regeneration failed")
-                    return self._generate_structured_legal_response(query, topic, context)
-            
-            logger.info("🎯 Returning AI-generated Chain-of-Thought response")
-            return generated_response
+            # Simple check to ensure response is relevant to the question
+            if self._check_response_relevance(query, generated_response):
+                return generated_response
+            else:
+                logger.warning("⚠️ Response seems irrelevant, using structured response")
+                return self._generate_structured_legal_response(query, topic, context)
             
         except Exception as e:
             logger.error(f"❌ Gemini API error: {e}")
