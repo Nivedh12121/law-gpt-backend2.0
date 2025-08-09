@@ -230,43 +230,65 @@ class UltraFastLegalRAG:
         query_lower = query.lower()
         
         # First, check for high-priority exact patterns (fixes most failing cases)
-        priority_patterns = {
-            # Criminal Law patterns
-            ("rights of accused", "accused", "arrest"): "criminal_law",
-            ("complaint in magistrate", "magistrate court"): "criminal_law", 
-            ("ndps act", "bail in ndps"): "criminal_law",
-            ("false case", "झूठे मुकदमे"): "criminal_law",
-            
-            # Constitutional Law patterns  
-            ("writ petition", "high court"): "constitutional_law",
-            ("PIL", "public interest litigation"): "constitutional_law",
-            ("article 21", "article 14", "article 19", "article 32", "article 226", "article 356"): "constitutional_law",
-            ("संविधान के अनुच्छेद", "अनुच्छेद"): "constitutional_law",
-            
-            # Family Law patterns
-            ("divorce petition", "family court"): "family_law",
-            ("section 125 crpc", "wife maintenance", "maintenance amount for wife"): "family_law", 
-            ("domestic violence", "protection of women act"): "family_law",
-            ("शादी के कितने दिन", "तलाक"): "family_law",
-            
-            # Motor Vehicles patterns  
-            ("vehicle registration", "rc book", "transfer vehicle ownership"): "motor_vehicles_law",
-            ("ट्रैफिक चालान", "traffic fine"): "motor_vehicles_law",
-            
-            # Property Law patterns
-            ("property documents", "check property documents"): "property_law",
-            ("प्रॉपर्टी का पंजीकरण", "property registration"): "property_law",
-            
-            # General Law patterns
-            ("rti application", "consumer complaint", "cyber crime", "it act", "labor laws"): "general_law",
-            ("GST registration", "trademark register"): "general_law",
-            ("पर्यावरण प्रदूषण", "environmental"): "general_law"
-        }
+        # Use individual pattern matching for better accuracy
         
-        # Check priority patterns first
-        for patterns, topic in priority_patterns.items():
-            if any(pattern in query_lower for pattern in patterns):
-                return topic, 0.9  # High confidence for pattern matches
+        # Criminal Law specific patterns
+        if any(phrase in query_lower for phrase in ["rights of accused", "accused person"]):
+            return "criminal_law", 0.9
+        if any(phrase in query_lower for phrase in ["magistrate court", "complaint in magistrate"]):
+            return "criminal_law", 0.9
+        if "ndps act" in query_lower or ("bail" in query_lower and "ndps" in query_lower):
+            return "criminal_law", 0.9
+        if "झूठे मुकदमे" in query_lower or "false case" in query_lower:
+            return "criminal_law", 0.9
+            
+        # Constitutional Law specific patterns  
+        if "writ petition" in query_lower or ("writ" in query_lower and "high court" in query_lower):
+            return "constitutional_law", 0.9
+        if "PIL" in query_lower or "public interest litigation" in query_lower:
+            return "constitutional_law", 0.9
+        if any(art in query_lower for art in ["article 21", "article 14", "article 19", "article 32", "article 226", "article 356"]):
+            return "constitutional_law", 0.9
+        if "संविधान के अनुच्छेद" in query_lower:
+            return "constitutional_law", 0.9
+            
+        # Family Law specific patterns
+        if "divorce petition" in query_lower or ("divorce" in query_lower and "family court" in query_lower):
+            return "family_law", 0.9
+        if "section 125 crpc" in query_lower or "maintenance amount for wife" in query_lower:
+            return "family_law", 0.9
+        if "domestic violence" in query_lower or "protection of women act" in query_lower:
+            return "family_law", 0.9
+        if "शादी के कितने दिन" in query_lower:
+            return "family_law", 0.9
+            
+        # Motor Vehicles specific patterns  
+        if "vehicle registration" in query_lower or "rc book" in query_lower:
+            return "motor_vehicles_law", 0.9
+        if "transfer vehicle ownership" in query_lower:
+            return "motor_vehicles_law", 0.9  
+        if "ट्रैफिक चालान" in query_lower or ("traffic" in query_lower and ("fine" in query_lower or "challan" in query_lower)):
+            return "motor_vehicles_law", 0.9
+            
+        # Property Law specific patterns
+        if "property documents" in query_lower or ("check" in query_lower and "property" in query_lower):
+            return "property_law", 0.9
+        if "प्रॉपर्टी का पंजीकरण" in query_lower:
+            return "property_law", 0.9
+            
+        # General Law specific patterns
+        if "rti application" in query_lower:
+            return "general_law", 0.9
+        if "consumer complaint" in query_lower:
+            return "general_law", 0.9
+        if ("cyber crime" in query_lower) or ("it act" in query_lower):
+            return "general_law", 0.9
+        if "GST registration" in query_lower:
+            return "general_law", 0.9
+        if "trademark register" in query_lower:
+            return "general_law", 0.9
+        if "पर्यावरण प्रदूषण" in query_lower:
+            return "general_law", 0.9
         
         # Continue with regular keyword-based classification
         topic_scores = {}
