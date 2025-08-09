@@ -242,8 +242,8 @@ class UltraFastLegalRAG:
         if "झूठे मुकदमे" in query_lower or "false case" in query_lower:
             return "criminal_law", 0.9
             
-        # ADVANCED CRIMINAL LAW PATTERNS
-        if "यौन उत्पीड़न" in query_lower or "sexual harassment" in query_lower:
+        # ADVANCED CRIMINAL LAW PATTERNS (MORE PRECISE)
+        if "यौन उत्पीड़न" in query_lower or ("sexual harassment" in query_lower and "complaint" in query_lower):
             return "criminal_law", 0.9
         if "charge sheet" in query_lower and "criminal case" in query_lower:
             return "criminal_law", 0.9
@@ -258,6 +258,38 @@ class UltraFastLegalRAG:
         if any(phrase in query_lower for phrase in ["section 376a", "custodial rape", "section 498a", "dowry harassment"]):
             return "criminal_law", 0.9
         if "zero fir" in query_lower or "outside jurisdiction" in query_lower:
+            return "criminal_law", 0.9
+            
+        # EXPERT-LEVEL CRIMINAL LAW PATTERNS
+        if any(phrase in query_lower for phrase in ["section 511 ipc", "attempt and preparation"]):
+            return "criminal_law", 0.9
+        if "section 41 crpc" in query_lower and "arrest without warrant" in query_lower:
+            return "criminal_law", 0.9
+        if "section 34 ipc" in query_lower or "common intention" in query_lower:
+            return "criminal_law", 0.9
+        if any(phrase in query_lower for phrase in ["illegal police custody", "third degree torture"]):
+            return "criminal_law", 0.9
+        if "section 482 crpc" in query_lower or "quashing fir" in query_lower:
+            return "criminal_law", 0.9
+        if "section 41a crpc" in query_lower:
+            return "criminal_law", 0.9
+        if any(phrase in query_lower for phrase in ["section 107 ipc", "section 120a ipc", "abetment and conspiracy"]):
+            return "criminal_law", 0.9
+        if "नकली मुकदमे" in query_lower or "false case bail" in query_lower:
+            return "criminal_law", 0.9
+        if "plea bargaining" in query_lower or "chapter xxia crpc" in query_lower:
+            return "criminal_law", 0.9
+        if "narco analysis" in query_lower and "criminal case" in query_lower:
+            return "criminal_law", 0.9
+        if "section 372 crpc" in query_lower or "victim rights" in query_lower:
+            return "criminal_law", 0.9
+        if "test identification parade" in query_lower or "section 9 evidence act" in query_lower:
+            return "criminal_law", 0.9
+        if any(phrase in query_lower for phrase in ["section 24 evidence act", "section 30 evidence act", "confession admissible"]):
+            return "criminal_law", 0.9
+        if "section 374 crpc" in query_lower and "sessions court" in query_lower:
+            return "criminal_law", 0.9
+        if "section 357a crpc" in query_lower or "compensation crime victims" in query_lower:
             return "criminal_law", 0.9
             
         # Constitutional Law specific patterns (ENHANCED FOR ADVANCED CONCEPTS)
@@ -290,6 +322,32 @@ class UltraFastLegalRAG:
         if any(phrase in query_lower for phrase in ["original jurisdiction", "appellate jurisdiction", "supreme court jurisdiction"]):
             return "constitutional_law", 0.9
             
+        # EXPERT-LEVEL CONSTITUTIONAL LAW PATTERNS
+        if any(phrase in query_lower for phrase in ["colorable legislation", "colourable legislation"]):
+            return "constitutional_law", 0.9
+        if "delegated legislation" in query_lower and "unconstitutional" in query_lower:
+            return "constitutional_law", 0.9
+        if any(phrase in query_lower for phrase in ["doctrine of eclipse", "severability", "constitutional interpretation"]):
+            return "constitutional_law", 0.9
+        if "constitutional bench reference" in query_lower or "constitutional bench" in query_lower:
+            return "constitutional_law", 0.9
+        if any(phrase in query_lower for phrase in ["constitutional morality", "social morality"]):
+            return "constitutional_law", 0.9
+        if "article 131" in query_lower and "supreme court" in query_lower:
+            return "constitutional_law", 0.9
+        if "अनुच्छेद 143" in query_lower or "article 143" in query_lower:
+            return "constitutional_law", 0.9
+        if "prospective overruling" in query_lower or "prospective overrule" in query_lower:
+            return "constitutional_law", 0.9
+        if "article 142" in query_lower and "complete justice" in query_lower:
+            return "constitutional_law", 0.9
+        if any(phrase in query_lower for phrase in ["dissolution of parliament", "prorogation of parliament"]):
+            return "constitutional_law", 0.9
+        if "article 201" in query_lower and ("governor" in query_lower or "president assent" in query_lower):
+            return "constitutional_law", 0.9
+        if "article 360" in query_lower or "financial emergency" in query_lower:
+            return "constitutional_law", 0.9
+            
         # Family Law specific patterns (ENHANCED FOR ADVANCED CONCEPTS)
         if "divorce petition" in query_lower or ("divorce" in query_lower and "family court" in query_lower):
             return "family_law", 0.9
@@ -314,6 +372,26 @@ class UltraFastLegalRAG:
         if any(phrase in query_lower for phrase in ["adopted child", "hindu adoption act", "adoption rights"]):
             return "family_law", 0.9
         if "declaring marriage void" in query_lower or ("marriage void" in query_lower and "section 11" in query_lower):
+            return "family_law", 0.9
+            
+        # EXPERT-LEVEL FAMILY LAW PATTERNS
+        if "legitimate expectation" in query_lower and "maintenance" in query_lower:
+            return "family_law", 0.9
+        if "desertion" in query_lower and ("divorce" in query_lower or "section 13" in query_lower):
+            return "family_law", 0.9
+        if any(phrase in query_lower for phrase in ["domestic violence act", "protection of women"]):
+            return "family_law", 0.9
+        if "inter country adoption" in query_lower or "juvenile justice act" in query_lower:
+            return "family_law", 0.9
+        if "nikah" in query_lower and "muslim personal law" in query_lower:
+            return "family_law", 0.9
+        if "restitution of conjugal rights" in query_lower or "section 9" in query_lower:
+            return "family_law", 0.9
+        if "पारिवारिक न्यायालय" in query_lower or "family court" in query_lower:
+            return "family_law", 0.9
+        if "interfaith marriage" in query_lower and "custody" in query_lower:
+            return "family_law", 0.9
+        if "hague convention" in query_lower and "child custody" in query_lower:
             return "family_law", 0.9
             
         # Motor Vehicles specific patterns (ENHANCED FOR ADVANCED CONCEPTS)
@@ -354,7 +432,25 @@ class UltraFastLegalRAG:
         if "delay in property possession" in query_lower or "property possession delay" in query_lower:
             return "property_law", 0.9
             
-        # Company Law specific patterns (NEW ADVANCED PATTERNS)
+        # EXPERT-LEVEL PROPERTY LAW PATTERNS
+        if any(phrase in query_lower for phrase in ["section 53a", "part performance", "transfer of property act"]):
+            return "property_law", 0.9
+        if "adverse possession" in query_lower and ("12 years" in query_lower or "land acquisition" in query_lower):
+            return "property_law", 0.9
+        if any(phrase in query_lower for phrase in ["sale deed and agreement", "agreement to sell"]):
+            return "property_law", 0.9
+        if "section 8 partition act" in query_lower or "partition suit" in query_lower:
+            return "property_law", 0.9
+        if "section 53 transfer" in query_lower or "fraudulent transfer" in query_lower:
+            return "property_law", 0.9
+        if "mutation entry" in query_lower and "revenue records" in query_lower:
+            return "property_law", 0.9
+        if "मालिकाना हक" in query_lower or "property ownership" in query_lower:
+            return "property_law", 0.9
+        if any(phrase in query_lower for phrase in ["feeding the grant", "estoppel property"]):
+            return "property_law", 0.9
+            
+        # Company Law specific patterns (ENHANCED ADVANCED PATTERNS)
         if any(phrase in query_lower for phrase in ["private company to public", "company conversion", "conversion of company"]):
             return "company_law", 0.9
         if "oppression and mismanagement" in query_lower or ("companies act" in query_lower and "petition" in query_lower):
@@ -362,6 +458,20 @@ class UltraFastLegalRAG:
         if any(phrase in query_lower for phrase in ["board resolution", "general meeting resolution", "company resolution"]):
             return "company_law", 0.9
         if "striking off company" in query_lower or "registrar records" in query_lower:
+            return "company_law", 0.9
+            
+        # EXPERT-LEVEL COMPANY LAW PATTERNS
+        if "section 245 companies act" in query_lower or "class action suit" in query_lower:
+            return "company_law", 0.9
+        if "winding up company" in query_lower and "insolvency code" in query_lower:
+            return "company_law", 0.9
+        if "section 135" in query_lower or "corporate social responsibility" in query_lower:
+            return "company_law", 0.9
+        if "section 230 companies act" in query_lower or ("merger" in query_lower and "amalgamation" in query_lower):
+            return "company_law", 0.9
+        if "lifting corporate veil" in query_lower or "corporate veil" in query_lower:
+            return "company_law", 0.9
+        if "section 188 companies act" in query_lower or "related party transactions" in query_lower:
             return "company_law", 0.9
             
         # Contract Law specific patterns (ENHANCED)
@@ -374,7 +484,7 @@ class UltraFastLegalRAG:
         if "specific performance" in query_lower and ("contract" in query_lower or "agreement" in query_lower):
             return "contract_law", 0.9
             
-        # General Law specific patterns (ENHANCED FOR ADVANCED CONCEPTS)
+        # General Law specific patterns (COMPREHENSIVE ADVANCED CONCEPTS)
         if "rti application" in query_lower:
             return "general_law", 0.9
         if "consumer complaint" in query_lower:
@@ -400,6 +510,90 @@ class UltraFastLegalRAG:
         if "CAT" in query_lower or "central administrative tribunal" in query_lower:
             return "general_law", 0.9
         if "income tax assessment" in query_lower or "income tax appeal" in query_lower:
+            return "general_law", 0.9
+            
+        # EXPERT-LEVEL GENERAL LAW PATTERNS (Tort Law, Civil Procedure, Evidence)
+        if "res ipsa loquitur" in query_lower or "tort law" in query_lower:
+            return "general_law", 0.9
+        if "section 5 limitation act" in query_lower or "limitation period" in query_lower:
+            return "general_law", 0.9
+        if any(phrase in query_lower for phrase in ["malicious prosecution", "defamation", "vicarious liability"]):
+            return "general_law", 0.9
+        if "order 39 cpc" in query_lower or "temporary injunction" in query_lower:
+            return "general_law", 0.9
+        if "medical malpractice" in query_lower or "negligence" in query_lower:
+            return "general_law", 0.9
+        if "attractive nuisance" in query_lower:
+            return "general_law", 0.9
+        if "order 21 cpc" in query_lower or "execution of decree" in query_lower:
+            return "general_law", 0.9
+        if "नुकसान की भरपाई" in query_lower or "civil suit damages" in query_lower:
+            return "general_law", 0.9
+        if any(phrase in query_lower for phrase in ["liquidated damages", "unliquidated damages"]):
+            return "general_law", 0.9
+            
+        # TAX LAW SPECIFIC PATTERNS
+        if "section 245n income tax" in query_lower or "advance ruling" in query_lower:
+            return "general_law", 0.9
+        if "itat" in query_lower or "income tax appellate tribunal" in query_lower:
+            return "general_law", 0.9
+        if any(phrase in query_lower for phrase in ["tax evasion", "tax avoidance"]):
+            return "general_law", 0.9
+        if "जीएसटी रिफंड" in query_lower or "gst refund" in query_lower:
+            return "general_law", 0.9
+            
+        # LABOR LAW SPECIFIC PATTERNS  
+        if "industrial disputes act" in query_lower or "retrenchment compensation" in query_lower:
+            return "general_law", 0.9
+        if "posh act" in query_lower and "workplace" in query_lower:
+            return "general_law", 0.9
+        if "trade union act" in query_lower or "recognition of trade union" in query_lower:
+            return "general_law", 0.9
+        if any(phrase in query_lower for phrase in ["provident fund", "gratuity", "termination"]):
+            return "general_law", 0.9
+            
+        # INTELLECTUAL PROPERTY PATTERNS
+        if "patents act 1970" in query_lower or "patent application" in query_lower:
+            return "general_law", 0.9
+        if "trademark infringement" in query_lower or "register trademark" in query_lower:
+            return "general_law", 0.9
+        if "copyright act 1957" in query_lower or "moral rights" in query_lower:
+            return "general_law", 0.9
+            
+        # ENVIRONMENTAL LAW PATTERNS
+        if "national green tribunal" in query_lower or "environmental damage" in query_lower:
+            return "general_law", 0.9
+        if "environment protection act" in query_lower or "environmental clearance" in query_lower:
+            return "general_law", 0.9
+            
+        # BANKING & FINANCE PATTERNS
+        if "sarfaesi act" in query_lower or "bank recovery" in query_lower:
+            return "general_law", 0.9
+        if "banking ombudsman" in query_lower:
+            return "general_law", 0.9
+        if "material disclosure" in query_lower and "insurance" in query_lower:
+            return "general_law", 0.9
+            
+        # ARBITRATION PATTERNS
+        if "foreign arbitral award" in query_lower or "enforcement" in query_lower:
+            return "general_law", 0.9
+        if "section 34 arbitration act" in query_lower or "challenge arbitral award" in query_lower:
+            return "general_law", 0.9
+            
+        # SPECIALIZED LAWS
+        if "pmla" in query_lower or "money laundering act" in query_lower:
+            return "general_law", 0.9
+        if "consumer protection act" in query_lower and "online fraud" in query_lower:
+            return "general_law", 0.9
+        if "extradition act" in query_lower:
+            return "general_law", 0.9
+            
+        # EVIDENCE LAW PATTERNS
+        if any(phrase in query_lower for phrase in ["examination in chief", "cross examination"]):
+            return "general_law", 0.9
+        if "section 65b evidence act" in query_lower or "electronic evidence" in query_lower:
+            return "general_law", 0.9
+        if "section 56 evidence act" in query_lower or "judicial notice" in query_lower:
             return "general_law", 0.9
         
         # Continue with regular keyword-based classification
